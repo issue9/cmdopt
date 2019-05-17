@@ -26,22 +26,35 @@ type command struct {
 // CmdOpt 带子命令的命令行操作
 type CmdOpt struct {
 	commands    map[string]*command
-	ErrHandling flag.ErrorHandling
-	Output      io.Writer // 输出通道
-	Usage       func()
+	errHandling flag.ErrorHandling
+	output      io.Writer // 输出通道
+	usage       func(io.Writer)
 }
 
-// New 声明一条新的子命令
-func (opt *CmdOpt) New(name string, do DoFunc) *flag.FlagSet {
-	if opt.commands == nil {
-		opt.commands = make(map[string]*command, 10)
+// New 新的 CmdOpt 对象
+func New(output io.Writer, errHandling flag.ErrorHandling, usage func(io.Writer)) *CmdOpt {
+	return &CmdOpt{
+		commands:    make(map[string]*command, 10),
+		errHandling: errHandling,
+		output:      output,
+		usage:       usage,
 	}
+}
 
+// New 注册一条新的子命令
+//
+// name 为子命令的名称，必须唯一；
+// do 为该条子命令执行的函数体。
+//
+// 返回 FlagSet，不需要手动调用 FlagSet.Parse，
+// 该方法会在执行时自动执行，传递给 FlagSet.Parse() 的参数中为 os.Args[2:]
+func (opt *CmdOpt) New(name string, do DoFunc) *flag.FlagSet {
 	if _, found := opt.commands[name]; found {
 		panic("存在相同名称的数据")
 	}
 
-	fs := flag.NewFlagSet(name, opt.ErrHandling)
+	fs := flag.NewFlagSet(name, opt.errHandling)
+	fs.SetOutput(opt.output)
 
 	opt.commands[name] = &command{
 		FlagSet: fs,
@@ -52,33 +65,24 @@ func (opt *CmdOpt) New(name string, do DoFunc) *flag.FlagSet {
 }
 
 // Exec 执行命令行程序
+//
+// args 第一个元素应该是子命令名称。
 func (opt *CmdOpt) Exec(args []string) error {
 	if len(args) == 0 {
-		opt.Usage()
+		opt.usage(opt.output)
 		return nil
 	}
 
-	cmd, found := opt.commands[args[1]]
+	cmd, found := opt.commands[args[0]]
 	if !found {
 		return ErrNotFound
 	}
 
-	if err := cmd.Parse(args[2:]); err != nil {
+	if err := cmd.Parse(args[1:]); err != nil {
 		return err
 	}
 
-	return cmd.do(opt.Output)
-}
-
-// Help 注释 cmd help xxx 的命令，其中子命令 help 通过 name 指定
-func (opt *CmdOpt) Help(name string) error {
-	for k, v := range opt.commands {
-		if k == name {
-			v.Usage()
-			return nil
-		}
-	}
-	return nil
+	return cmd.do(opt.output)
 }
 
 // Commands 所有的子命令列表
