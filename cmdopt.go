@@ -6,14 +6,12 @@
 package cmdopt
 
 import (
-	"errors"
 	"flag"
 	"io"
 	"sort"
 )
 
-// ErrNotFound 子命令不存在时，返回该错误信息
-var ErrNotFound = errors.New("不存在的子命令")
+var notFound = []byte("不存在的子命令")
 
 // DoFunc 子命令的执行函数
 type DoFunc func(io.Writer) error
@@ -75,7 +73,9 @@ func (opt *CmdOpt) Exec(args []string) error {
 
 	cmd, found := opt.commands[args[0]]
 	if !found {
-		return ErrNotFound
+		opt.output.Write(notFound)
+		opt.usage(opt.output)
+		return nil
 	}
 
 	if err := cmd.Parse(args[1:]); err != nil {

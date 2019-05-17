@@ -28,5 +28,7 @@ func (h *help) do(output io.Writer) error {
 		}
 	}
 
-	return ErrNotFound
+	h.opt.output.Write(notFound)
+	h.opt.usage(h.opt.output)
+	return nil
 }

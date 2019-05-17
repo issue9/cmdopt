@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"flag"
 	"io"
+	"strings"
 	"testing"
 
 	"github.com/issue9/assert"
@@ -59,11 +60,13 @@ func TestOptCmd(t *testing.T) {
 
 	// Exec not-exists
 	output.Reset()
-	a.Error(opt.Exec([]string{"not-exists"}))
+	a.NotError(opt.Exec([]string{"not-exists"}))
+	a.True(strings.HasPrefix(output.String(), string(notFound)))
 
 	// Exec help 未注册
 	output.Reset()
-	a.Error(opt.Exec([]string{"not-exists"}))
+	a.NotError(opt.Exec([]string{"not-exists"}))
+	a.True(strings.HasPrefix(output.String(), string(notFound)))
 
 	// 注册 Help
 	opt.Help("h")
@@ -72,9 +75,11 @@ func TestOptCmd(t *testing.T) {
 
 	// Exec Help not-exists
 	output.Reset()
-	a.Error(opt.Exec([]string{"h", "not-exists"}))
+	a.NotError(opt.Exec([]string{"h", "not-exists"}))
+	a.True(strings.HasPrefix(output.String(), string(notFound)))
 
 	// Exec Help
 	output.Reset()
-	a.Error(opt.Exec([]string{"h", ""}))
+	a.NotError(opt.Exec([]string{"h", ""}))
+	a.True(strings.HasPrefix(output.String(), string(notFound)))
 }
