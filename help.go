@@ -28,9 +28,10 @@ func (h *help) do(output io.Writer) error {
 		}
 	}
 
-	h.opt.output.Write(notFound)
-	h.opt.usage(h.opt.output)
-	return nil
+	if _, err := h.opt.output.Write(notFound); err != nil {
+		return err
+	}
+	return h.opt.usage(h.opt.output)
 }
 
 func (h *help) usage(output io.Writer) error {

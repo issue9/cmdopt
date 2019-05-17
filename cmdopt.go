@@ -26,11 +26,11 @@ type CmdOpt struct {
 	commands    map[string]*command
 	errHandling flag.ErrorHandling
 	output      io.Writer // 输出通道
-	usage       func(io.Writer)
+	usage       DoFunc
 }
 
 // New 新的 CmdOpt 对象
-func New(output io.Writer, errHandling flag.ErrorHandling, usage func(io.Writer)) *CmdOpt {
+func New(output io.Writer, errHandling flag.ErrorHandling, usage DoFunc) *CmdOpt {
 	return &CmdOpt{
 		commands:    make(map[string]*command, 10),
 		errHandling: errHandling,
@@ -75,15 +75,15 @@ func (opt *CmdOpt) New(name string, do, usage DoFunc) *flag.FlagSet {
 // args 第一个元素应该是子命令名称。
 func (opt *CmdOpt) Exec(args []string) error {
 	if len(args) == 0 {
-		opt.usage(opt.output)
-		return nil
+		return opt.usage(opt.output)
 	}
 
 	cmd, found := opt.commands[args[0]]
 	if !found {
-		opt.output.Write(notFound)
-		opt.usage(opt.output)
-		return nil
+		if _, err := opt.output.Write(notFound); err != nil {
+			return err
+		}
+		return opt.usage(opt.output)
 	}
 
 	if err := cmd.Parse(args[1:]); err != nil {

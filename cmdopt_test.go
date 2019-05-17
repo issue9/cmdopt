@@ -21,8 +21,9 @@ func buildDo(text string) DoFunc {
 	}
 }
 
-func usage(output io.Writer) {
-	output.Write([]byte("usage"))
+func usage(output io.Writer) error {
+	_, err := output.Write([]byte("usage"))
+	return err
 }
 
 func TestOptCmd(t *testing.T) {
