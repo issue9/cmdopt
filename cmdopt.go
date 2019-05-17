@@ -11,7 +11,7 @@ import (
 	"sort"
 )
 
-var notFound = []byte("不存在的子命令")
+var notFound = []byte("不存在的子命令\n\n")
 
 // DoFunc 子命令的执行函数
 type DoFunc func(io.Writer) error
@@ -42,17 +42,25 @@ func New(output io.Writer, errHandling flag.ErrorHandling, usage func(io.Writer)
 // New 注册一条新的子命令
 //
 // name 为子命令的名称，必须唯一；
-// do 为该条子命令执行的函数体。
+// do 为该条子命令执行的函数体；
+// usage 为该条子命令的帮助内容输出。
+// 如果 usage 为 nil，则采用自带的内容，也可以通过返回值再次指定。
 //
 // 返回 FlagSet，不需要手动调用 FlagSet.Parse，
 // 该方法会在执行时自动执行，传递给 FlagSet.Parse() 的参数中为 os.Args[2:]
-func (opt *CmdOpt) New(name string, do DoFunc) *flag.FlagSet {
+func (opt *CmdOpt) New(name string, do, usage DoFunc) *flag.FlagSet {
 	if _, found := opt.commands[name]; found {
 		panic("存在相同名称的数据")
 	}
 
 	fs := flag.NewFlagSet(name, opt.errHandling)
 	fs.SetOutput(opt.output)
+
+	if usage != nil {
+		fs.Usage = func() {
+			usage(fs.Output())
+		}
+	}
 
 	opt.commands[name] = &command{
 		FlagSet: fs,
