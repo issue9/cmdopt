@@ -62,12 +62,12 @@ func TestOptCmd(t *testing.T) {
 	// Exec not-exists
 	output.Reset()
 	a.NotError(opt.Exec([]string{"not-exists"}))
-	a.True(strings.HasPrefix(output.String(), string(notFound)))
+	a.True(strings.HasPrefix(output.String(), string(notFound("not-exists"))))
 
 	// Exec help 未注册
 	output.Reset()
 	a.NotError(opt.Exec([]string{"not-exists"}))
-	a.True(strings.HasPrefix(output.String(), string(notFound)))
+	a.True(strings.HasPrefix(output.String(), string(notFound("not-exists"))))
 
 	// 注册 h
 	opt.Help("h")
@@ -77,12 +77,12 @@ func TestOptCmd(t *testing.T) {
 	// Exec h not-exists
 	output.Reset()
 	a.NotError(opt.Exec([]string{"h", "not-exists"}))
-	a.True(strings.HasPrefix(output.String(), string(notFound)))
+	a.True(strings.HasPrefix(output.String(), string(notFound("not-exists"))))
 
 	// Exec h
 	output.Reset()
 	a.NotError(opt.Exec([]string{"h", ""}))
-	a.True(strings.HasPrefix(output.String(), string(notFound)))
+	a.True(strings.HasPrefix(output.String(), string(notFound(""))))
 
 	// Exec h h
 	output.Reset()

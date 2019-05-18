@@ -29,7 +29,7 @@ func (h *help) do(output io.Writer) error {
 		}
 	}
 
-	if _, err := h.opt.output.Write(notFound); err != nil {
+	if _, err := h.opt.output.Write(notFound(name)); err != nil {
 		return err
 	}
 	return h.opt.usage(h.opt.output)

@@ -7,11 +7,10 @@ package cmdopt
 
 import (
 	"flag"
+	"fmt"
 	"io"
 	"sort"
 )
-
-var notFound = []byte("不存在的子命令\n\n")
 
 // DoFunc 子命令的执行函数
 type DoFunc func(io.Writer) error
@@ -27,6 +26,10 @@ type CmdOpt struct {
 	errHandling flag.ErrorHandling
 	output      io.Writer // 输出通道
 	usage       DoFunc
+}
+
+func notFound(name string) []byte {
+	return []byte(fmt.Sprintf("不存在的子命令 %s\n", name))
 }
 
 // New 新的 CmdOpt 对象
@@ -80,7 +83,7 @@ func (opt *CmdOpt) Exec(args []string) error {
 
 	cmd, found := opt.commands[args[0]]
 	if !found {
-		if _, err := opt.output.Write(notFound); err != nil {
+		if _, err := opt.output.Write(notFound(args[0])); err != nil {
 			return err
 		}
 		return opt.usage(opt.output)
