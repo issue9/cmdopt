@@ -21,8 +21,9 @@ func (opt *CmdOpt) Help(name string) {
 }
 
 func (h *help) do(output io.Writer) error {
+	name := h.fs.Arg(0)
 	for k, v := range h.opt.commands {
-		if k == h.fs.Arg(0) {
+		if k == name {
 			v.Usage()
 			return nil
 		}
