@@ -49,8 +49,8 @@ func New(output io.Writer, errHandling flag.ErrorHandling, usage DoFunc) *CmdOpt
 // usage 为该条子命令的帮助内容输出。
 // 如果 usage 为 nil，则采用自带的内容，也可以通过返回值再次指定。
 //
-// 返回 FlagSet，不需要手动调用 FlagSet.Parse，
-// 该方法会在执行时自动执行，传递给 FlagSet.Parse() 的参数中为 os.Args[2:]
+// 返回 FlagSet，不需要手动调用 FlagSet.Parse，该方法会在执行时自动执行。
+// FlagSet.Args 返回的是包含了子命令在内容的所有内容。
 func (opt *CmdOpt) New(name string, do, usage DoFunc) *flag.FlagSet {
 	if _, found := opt.commands[name]; found {
 		panic("存在相同名称的数据")
@@ -89,7 +89,7 @@ func (opt *CmdOpt) Exec(args []string) error {
 		return opt.usage(opt.output)
 	}
 
-	if err := cmd.Parse(args[1:]); err != nil {
+	if err := cmd.Parse(args); err != nil {
 		return err
 	}
 

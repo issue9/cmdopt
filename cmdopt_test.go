@@ -46,7 +46,7 @@ func TestOptCmd(t *testing.T) {
 	a.Equal([]string{"test1", "test2"}, cmds)
 
 	// Exec test1
-	a.NotError(opt.Exec([]string{"test1", "xxx"}))
+	a.NotError(opt.Exec([]string{"test1", "-v"}))
 	a.Equal("test1", output.String())
 
 	// Exec test2
@@ -87,5 +87,5 @@ func TestOptCmd(t *testing.T) {
 	// Exec h h
 	output.Reset()
 	a.NotError(opt.Exec([]string{"h", "h"}))
-	a.Equal(output.String(), "查看各个子命令的帮助内容", opt.Commands())
+	a.Equal(output.String(), "查看各个子命令的帮助内容\n")
 }

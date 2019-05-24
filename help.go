@@ -6,6 +6,7 @@ package cmdopt
 
 import (
 	"flag"
+	"fmt"
 	"io"
 )
 
@@ -21,7 +22,15 @@ func (opt *CmdOpt) Help(name string) {
 }
 
 func (h *help) do(output io.Writer) error {
-	name := h.fs.Arg(0)
+	if len(h.fs.Args()) == 1 {
+		_, err := output.Write([]byte("未指定查询的命令名称"))
+		if err != nil {
+			return err
+		}
+
+		return h.usage(output)
+	}
+	name := h.fs.Arg(1)
 	for k, v := range h.opt.commands {
 		if k == name {
 			v.Usage()
@@ -36,6 +45,6 @@ func (h *help) do(output io.Writer) error {
 }
 
 func (h *help) usage(output io.Writer) error {
-	_, err := output.Write([]byte("查看各个子命令的帮助内容"))
+	_, err := fmt.Fprintln(output, `查看各个子命令的帮助内容`)
 	return err
 }
