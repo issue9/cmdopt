@@ -23,7 +23,7 @@ func (opt *CmdOpt) Help(name string) {
 
 func (h *help) do(output io.Writer) error {
 	if len(h.fs.Args()) == 1 {
-		_, err := output.Write([]byte("未指定查询的命令名称"))
+		_, err := fmt.Fprintln(output, "未指定查询的命令名称")
 		if err != nil {
 			return err
 		}
