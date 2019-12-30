@@ -1,13 +1,10 @@
-// Copyright 2019 by caixw, All rights reserved.
-// Use of this source code is governed by a MIT
-// license that can be found in the LICENSE file.
+// SPDX-License-Identifier: MIT
 
 // Package cmdopt 命令行选项功能
 package cmdopt
 
 import (
 	"flag"
-	"fmt"
 	"io"
 	"sort"
 )
@@ -24,21 +21,22 @@ type command struct {
 type CmdOpt struct {
 	commands    map[string]*command
 	errHandling flag.ErrorHandling
-	output      io.Writer // 输出通道
-	usage       DoFunc
-}
-
-func notFound(name string) []byte {
-	return []byte(fmt.Sprintf("不存在的子命令 %s\n", name))
+	output      io.Writer           // 输出通道
+	usage       DoFunc              // 在未指定任何子命令时，执行该函数
+	notFound    func(string) string // 未找到子命令时，显示的内容
 }
 
 // New 新的 CmdOpt 对象
-func New(output io.Writer, errHandling flag.ErrorHandling, usage DoFunc) *CmdOpt {
+//
+// output 表示命令输出内容所指向的通道；
+// usage 表示未找到命令时，需要执行的函数。
+func New(output io.Writer, errHandling flag.ErrorHandling, usage DoFunc, notFound func(string) string) *CmdOpt {
 	return &CmdOpt{
 		commands:    make(map[string]*command, 10),
 		errHandling: errHandling,
 		output:      output,
 		usage:       usage,
+		notFound:    notFound,
 	}
 }
 
@@ -83,7 +81,8 @@ func (opt *CmdOpt) Exec(args []string) error {
 
 	cmd, found := opt.commands[args[0]]
 	if !found {
-		if _, err := opt.output.Write(notFound(args[0])); err != nil {
+		notFound := []byte(opt.notFound(args[0]))
+		if _, err := opt.output.Write(notFound); err != nil {
 			return err
 		}
 		return opt.usage(opt.output)

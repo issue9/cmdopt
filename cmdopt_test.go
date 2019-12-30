@@ -1,6 +1,4 @@
-// Copyright 2019 by caixw, All rights reserved.
-// Use of this source code is governed by a MIT
-// license that can be found in the LICENSE file.
+// SPDX-License-Identifier: MIT
 
 package cmdopt
 
@@ -29,7 +27,7 @@ func usage(output io.Writer) error {
 func TestOptCmd(t *testing.T) {
 	a := assert.New(t)
 	output := new(bytes.Buffer)
-	opt := New(output, flag.ExitOnError, usage)
+	opt := New(output, flag.ExitOnError, usage, func(string) string { return "not found" })
 	a.NotNil(opt)
 
 	fs1 := opt.New("test1", buildDo("test1"), nil)
@@ -62,30 +60,30 @@ func TestOptCmd(t *testing.T) {
 	// Exec not-exists
 	output.Reset()
 	a.NotError(opt.Exec([]string{"not-exists"}))
-	a.True(strings.HasPrefix(output.String(), string(notFound("not-exists"))))
+	a.True(strings.HasPrefix(output.String(), string(opt.notFound("not-exists"))))
 
 	// Exec help 未注册
 	output.Reset()
 	a.NotError(opt.Exec([]string{"not-exists"}))
-	a.True(strings.HasPrefix(output.String(), string(notFound("not-exists"))))
+	a.True(strings.HasPrefix(output.String(), string(opt.notFound("not-exists"))))
 
 	// 注册 h
-	opt.Help("h")
+	opt.Help("h", "usage")
 	output.Reset()
 	a.NotError(opt.Exec([]string{"h", "test1"}))
 
 	// Exec h not-exists
 	output.Reset()
 	a.NotError(opt.Exec([]string{"h", "not-exists"}))
-	a.True(strings.HasPrefix(output.String(), string(notFound("not-exists"))))
+	a.True(strings.HasPrefix(output.String(), string(opt.notFound("not-exists"))))
 
 	// Exec h
 	output.Reset()
 	a.NotError(opt.Exec([]string{"h", ""}))
-	a.True(strings.HasPrefix(output.String(), string(notFound(""))))
+	a.True(strings.HasPrefix(output.String(), string(opt.notFound(""))))
 
 	// Exec h h
 	output.Reset()
 	a.NotError(opt.Exec([]string{"h", "h"}))
-	a.Equal(output.String(), "查看各个子命令的帮助内容\n")
+	a.Equal(output.String(), "usage")
 }
