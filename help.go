@@ -4,21 +4,20 @@ package cmdopt
 
 import (
 	"flag"
-	"fmt"
 	"io"
 )
 
 type help struct {
-	fs           *flag.FlagSet
-	opt          *CmdOpt
-	usageContent string
+	fs    *flag.FlagSet
+	opt   *CmdOpt
+	usage DoFunc
 }
 
 // Help 注册 help 子命令
-func (opt *CmdOpt) Help(name, usage string) {
+func (opt *CmdOpt) Help(name string, usage DoFunc) {
 	h := &help{
-		opt:          opt,
-		usageContent: usage,
+		opt:   opt,
+		usage: usage,
 	}
 	h.fs = opt.New(name, h.do, h.usage)
 }
@@ -40,9 +39,4 @@ func (h *help) do(output io.Writer) error {
 		return err
 	}
 	return h.opt.usage(output)
-}
-
-func (h *help) usage(output io.Writer) error {
-	_, err := fmt.Fprint(output, h.usageContent)
-	return err
 }

@@ -68,7 +68,10 @@ func TestOptCmd(t *testing.T) {
 	a.True(strings.HasPrefix(output.String(), string(opt.notFound("not-exists"))))
 
 	// 注册 h
-	opt.Help("h", "usage")
+	opt.Help("h", func(w io.Writer) error {
+		_, err := w.Write([]byte("usage"))
+		return err
+	})
 	output.Reset()
 	a.NotError(opt.Exec([]string{"h", "test1"}))
 
