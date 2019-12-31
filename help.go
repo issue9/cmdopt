@@ -36,10 +36,10 @@ func (h *help) do(output io.Writer) error {
 		}
 	}
 
-	if _, err := h.opt.output.Write([]byte(h.opt.notFound(name))); err != nil {
+	if _, err := output.Write([]byte(h.opt.notFound(name))); err != nil {
 		return err
 	}
-	return h.opt.usage(h.opt.output)
+	return h.opt.usage(output)
 }
 
 func (h *help) usage(output io.Writer) error {

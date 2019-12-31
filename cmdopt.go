@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-// Package cmdopt 命令行选项功能
+// Package cmdopt 用于创子命令功能的命令行。
 package cmdopt
 
 import (
@@ -21,15 +21,17 @@ type command struct {
 type CmdOpt struct {
 	commands    map[string]*command
 	errHandling flag.ErrorHandling
-	output      io.Writer           // 输出通道
-	usage       DoFunc              // 在未指定任何子命令时，执行该函数
-	notFound    func(string) string // 未找到子命令时，显示的内容
+	output      io.Writer
+	usage       DoFunc
+	notFound    func(string) string
 }
 
 // New 新的 CmdOpt 对象
 //
 // output 表示命令输出内容所指向的通道；
-// usage 表示未找到命令时，需要执行的函数。
+// errHandling 传递给每一个 FlagSet 的内容；
+// usage 表示命令行的默认显示内容，在未指定子命令或是未找到子命令时会显示此内容；
+// notFound 未找到子命令时，会额外显示此内容。
 func New(output io.Writer, errHandling flag.ErrorHandling, usage DoFunc, notFound func(string) string) *CmdOpt {
 	return &CmdOpt{
 		commands:    make(map[string]*command, 10),
