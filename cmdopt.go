@@ -90,7 +90,11 @@ func (opt *CmdOpt) Exec(args []string) error {
 		return opt.usage(opt.output)
 	}
 
-	if err := cmd.Parse(args); err != nil {
+	var p []string
+	if len(args) > 1 {
+		p = args[1:]
+	}
+	if err := cmd.Parse(p); err != nil {
 		return err
 	}
 
