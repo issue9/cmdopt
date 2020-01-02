@@ -81,20 +81,19 @@ func (opt *CmdOpt) Exec(args []string) error {
 		return opt.usage(opt.output)
 	}
 
-	cmd, found := opt.commands[args[0]]
+	name := args[0]
+	args = args[1:]
+
+	cmd, found := opt.commands[name]
 	if !found {
-		notFound := []byte(opt.notFound(args[0]))
+		notFound := []byte(opt.notFound(name))
 		if _, err := opt.output.Write(notFound); err != nil {
 			return err
 		}
 		return opt.usage(opt.output)
 	}
 
-	var p []string
-	if len(args) > 1 {
-		p = args[1:]
-	}
-	if err := cmd.Parse(p); err != nil {
+	if err := cmd.Parse(args); err != nil {
 		return err
 	}
 

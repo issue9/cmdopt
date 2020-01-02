@@ -27,11 +27,13 @@ func usage(output io.Writer) error {
 func TestOptCmd(t *testing.T) {
 	a := assert.New(t)
 	output := new(bytes.Buffer)
-	opt := New(output, flag.ExitOnError, usage, func(string) string { return "not found" })
+	opt := New(output, flag.PanicOnError, usage, func(string) string { return "not found" })
 	a.NotNil(opt)
 
 	fs1 := opt.New("test1", buildDo("test1"), nil)
 	a.NotNil(fs1)
+	v := false
+	fs1.BoolVar(&v, "v", false, "usage")
 
 	a.Panic(func() {
 		opt.New("test1", buildDo("test1"), nil)

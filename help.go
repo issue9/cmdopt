@@ -27,7 +27,7 @@ func (h *help) do(output io.Writer) error {
 		return h.usage(output)
 	}
 
-	name := h.fs.Arg(1)
+	name := h.fs.Arg(0)
 	for k, v := range h.opt.commands {
 		if k == name {
 			v.Usage()
