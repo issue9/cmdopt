@@ -25,7 +25,7 @@ install := opt.New("install", func(output io.Writer)error{
 ----
 
 [![Go Walker](https://gowalker.org/api/v1/badge)](https://gowalker.org/github.com/issue9/cmdopt)
-[![GoDoc](https://godoc.org/github.com/issue9/cmdopt?status.svg)](https://godoc.org/github.com/issue9/cmdopt)
+[![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/issue9/cmdopt/v7)
 
 版权
 ----
