@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-// Package cmdopt 用于创子命令功能的命令行。
+// Package cmdopt 用于创子命令功能的命令行
 package cmdopt
 
 import (
@@ -31,7 +31,7 @@ type CmdOpt struct {
 // output 表示命令输出内容所指向的通道；
 // errHandling 传递给每一个 FlagSet 的内容；
 // usage 表示命令行的默认显示内容，在未指定子命令或是未找到子命令时会显示此内容；
-// notFound 未找到子命令时，会额外显示此内容。
+// notFound 未找到子命令时，会额外显示此内容，参数为子命令的名称。
 func New(output io.Writer, errHandling flag.ErrorHandling, usage DoFunc, notFound func(string) string) *CmdOpt {
 	return &CmdOpt{
 		commands:    make(map[string]*command, 10),
@@ -103,7 +103,6 @@ func (opt *CmdOpt) Exec(args []string) error {
 // Commands 所有的子命令列表
 func (opt *CmdOpt) Commands() []string {
 	keys := make([]string, 0, len(opt.commands))
-
 	for key := range opt.commands {
 		keys = append(keys, key)
 	}
