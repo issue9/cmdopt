@@ -8,29 +8,26 @@ import (
 )
 
 type help struct {
-	fs    *flag.FlagSet
-	opt   *CmdOpt
-	usage DoFunc
+	fs  *flag.FlagSet
+	opt *CmdOpt
 }
 
 // Help 注册 help 子命令
-func (opt *CmdOpt) Help(name string, usage DoFunc) {
-	h := &help{
-		opt:   opt,
-		usage: usage,
-	}
-	h.fs = opt.New(name, h.do, h.usage)
+func (opt *CmdOpt) Help(name, usage string) {
+	h := &help{opt: opt}
+	h.fs = opt.New(name, usage, h.do)
 }
 
 func (h *help) do(output io.Writer) error {
 	if h.fs.NArg() == 0 {
-		return h.usage(output)
+		h.fs.Usage()
+		return nil
 	}
 
 	name := h.fs.Arg(0)
-	for k, v := range h.opt.commands {
-		if k == name {
-			v.Usage()
+	for _, cmd := range h.opt.Commands() { // 调用 opt.Commands() 而不是 opt.commands，可以保证顺序一致。
+		if cmd == name {
+			h.opt.commands[cmd].Usage()
 			return nil
 		}
 	}
@@ -38,5 +35,6 @@ func (h *help) do(output io.Writer) error {
 	if _, err := output.Write([]byte(h.opt.notFound(name))); err != nil {
 		return err
 	}
-	return h.opt.usage(output)
+	h.fs.Usage()
+	return nil
 }
