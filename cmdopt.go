@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strings"
 )
 
 // DoFunc 子命令的执行函数
@@ -171,9 +172,19 @@ func (opt *CmdOpt) usage() error {
 			return err
 		}
 
-		for _, name := range opt.Commands() { // 保证顺序相同
+		cmds := opt.Commands()
+		var max int
+		for _, cmd := range cmds {
+			if len(cmd) > max {
+				max = len(cmd)
+			}
+		}
+		max += 3
+
+		for _, name := range cmds { // 保证顺序相同
 			cmd := opt.commands[name]
-			if _, err := fmt.Fprintf(opt.output, "%s\t%s\n", cmd.Name(), cmd.title); err != nil {
+			cmdName := name + strings.Repeat(" ", max-len(name))
+			if _, err := fmt.Fprintf(opt.output, "    %s%s\n", cmdName, cmd.title); err != nil {
 				return err
 			}
 		}
