@@ -37,11 +37,20 @@ type CmdOpt struct {
 //
 // output 表示输出的通道；
 // errHandling 表示出错时的处理方式，该值最终会被传递给子命令；
-// header 命令行显示内容的头部；
-// footer 命令行显示内容的尾部；
-// options 在子命令中显示选项命令时的标题；
-// commands 在显示子命令列表时的标题；
 // notFound 在找不到子命令时显示的额外信息；
+// header、footer、options 和 commands 作为输出帮助信息中的部分内容，
+// 由用户给出。
+// 帮助信息的模板如下：
+//  {header}
+//  {commands}:
+//      cmd1    cmd1 usage
+//      cmd2    cmd2 usage
+//  {footer}
+// 子命令的帮助信息模板如下：
+//  {usage}
+//  {options}:
+//      -flag1    flag1 usage
+//      -flag2    flag2 usage
 func New(
 	output io.Writer,
 	errHandling flag.ErrorHandling,
