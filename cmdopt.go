@@ -5,6 +5,7 @@ package cmdopt
 
 import (
 	"bytes"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -102,7 +103,7 @@ func (opt *CmdOpt) New(name, usage string, do DoFunc) *flag.FlagSet {
 
 	var title string
 	bs, err := bytes.NewBufferString(usage).ReadString('\n')
-	if err == io.EOF {
+	if errors.Is(err, io.EOF) {
 		title = usage
 	} else {
 		title = string(bs)
