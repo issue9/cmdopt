@@ -1,8 +1,8 @@
 cmdopt
-[![Build Status](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fissue9%2Fcmdopt%2Fbadge%3Fref%3Dmaster&style=flat)](https://actions-badge.atrox.dev/issue9/cmdopt/goto?ref=master)
-[![Build Status](https://travis-ci.org/issue9/cmdopt.svg?branch=master)](https://travis-ci.org/issue9/cmdopt)
+[![Go](https://github.com/issue9/cmdopt/workflows/Go/badge.svg)](https://github.com/issue9/cmdopt/actions?query=workflow%3AGo)
 [![license](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](https://opensource.org/licenses/MIT)
 [![codecov](https://codecov.io/gh/issue9/cmdopt/branch/master/graph/badge.svg)](https://codecov.io/gh/issue9/cmdopt)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/issue9/cmdopt)](https://pkg.go.dev/github.com/issue9/cmdopt)
 ======
 
 cmdopt 命令行选项的增强，可以轻松处理子命令。高度重用 flag 包。
@@ -20,12 +20,6 @@ install := opt.New("install", func(output io.Writer)error{
     output.Write([]byte("install"))
 })
 ```
-
-文档
-----
-
-[![Go Walker](https://gowalker.org/api/v1/badge)](https://gowalker.org/github.com/issue9/cmdopt)
-[![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/issue9/cmdopt/v7)
 
 版权
 ----
