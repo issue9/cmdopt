@@ -24,51 +24,36 @@ type command struct {
 
 // CmdOpt 带子命令的命令行操作
 type CmdOpt struct {
-	errHandling flag.ErrorHandling
-	output      io.Writer
-	commands    map[string]*command
+	// 表示输出的通道，此值必须指定；
+	Output io.Writer
 
-	header        string
-	footer        string
-	commandsTitle string
-	notFound      func(string) string
-	optionsTitle  string
-}
+	// 表示出错时的处理方式，该值最终会被传递给子命令；
+	ErrorHandling flag.ErrorHandling
 
-// New 声明 CmdOpt 对象
-//
-// output 表示输出的通道；
-// errHandling 表示出错时的处理方式，该值最终会被传递给子命令；
-// notFound 在找不到子命令时显示的额外信息；
-// header、footer、options 和 commands 作为输出帮助信息中的部分内容，
-// 由用户给出。
-// 帮助信息的模板如下：
-//  {header}
-//  {commands}:
-//      cmd1    cmd1 usage
-//      cmd2    cmd2 usage
-//  {footer}
-// 子命令的帮助信息模板如下：
-//  {usage}
-//  {options}:
-//      -flag1    flag1 usage
-//      -flag2    flag2 usage
-func New(
-	output io.Writer,
-	errHandling flag.ErrorHandling,
-	header, footer, options, commands string,
-	notFound func(string) string,
-) *CmdOpt {
-	return &CmdOpt{
-		commands:      make(map[string]*command, 10),
-		errHandling:   errHandling,
-		output:        output,
-		header:        header,
-		footer:        footer,
-		optionsTitle:  options,
-		commandsTitle: commands,
-		notFound:      notFound,
-	}
+	// Header、Footer、OptionsTitle 和 CommandsTitle 作为输出帮助信息中的部分内容，
+	// 由用户给出。
+	// 帮助信息的模板如下：
+	//  {Header}
+	//  {CommandsTitle}:
+	//      cmd1    cmd1 usage
+	//      cmd2    cmd2 usage
+	//  {Footer}
+	// 子命令的帮助信息模板如下：
+	//  usage
+	//  {OptionsTitle}:
+	//      -flag1    flag1 usage
+	//      -flag2    flag2 usage
+	Header        string
+	Footer        string
+	CommandsTitle string
+	OptionsTitle  string
+
+	// 在找不到子命令时显示的额外信息
+	//
+	// 其中参数为子命令的名称。
+	NotFound func(string) string
+
+	commands map[string]*command
 }
 
 // New 注册一条新的子命令
@@ -81,6 +66,10 @@ func New(
 // 返回 FlagSet，不需要手动调用 FlagSet.Parse，该方法会在执行时自动执行。
 // FlagSet.Args 返回的是包含了子命令在内容的所有内容。
 func (opt *CmdOpt) New(name, usage string, do DoFunc) *flag.FlagSet {
+	if opt.commands == nil {
+		opt.commands = make(map[string]*command, 10)
+	}
+
 	if _, found := opt.commands[name]; found {
 		panic(fmt.Sprintf("存在相同名称的子命令：%s", name))
 	}
@@ -88,14 +77,14 @@ func (opt *CmdOpt) New(name, usage string, do DoFunc) *flag.FlagSet {
 		panic("参数 usage 不能为空")
 	}
 
-	fs := flag.NewFlagSet(name, opt.errHandling)
-	fs.SetOutput(opt.output)
+	fs := flag.NewFlagSet(name, opt.ErrorHandling)
+	fs.SetOutput(opt.Output)
 	fs.Usage = func() {
-		fmt.Fprint(opt.output, usage)
-		if hasFlag(fs) && opt.optionsTitle != "" {
-			fmt.Fprint(opt.output, "\n", opt.optionsTitle, "\n")
+		fmt.Fprint(opt.Output, usage)
+		if hasFlag(fs) && opt.OptionsTitle != "" {
+			fmt.Fprint(opt.Output, "\n", opt.OptionsTitle, "\n")
 			origin := fs.Output()
-			fs.SetOutput(opt.output)
+			fs.SetOutput(opt.Output)
 			fs.PrintDefaults()
 			fs.SetOutput(origin)
 		}
@@ -139,8 +128,10 @@ func (opt *CmdOpt) Exec(args []string) error {
 
 	cmd, found := opt.commands[name]
 	if !found {
-		if _, err := opt.output.Write([]byte(opt.notFound(name))); err != nil {
-			return err
+		if opt.NotFound != nil {
+			if _, err := opt.Output.Write([]byte(opt.NotFound(name))); err != nil {
+				return err
+			}
 		}
 		return opt.usage()
 	}
@@ -149,7 +140,7 @@ func (opt *CmdOpt) Exec(args []string) error {
 		return err
 	}
 
-	return cmd.do(opt.output)
+	return cmd.do(opt.Output)
 }
 
 // Commands 所有的子命令列表
@@ -164,12 +155,12 @@ func (opt *CmdOpt) Commands() []string {
 }
 
 func (opt *CmdOpt) usage() error {
-	if _, err := fmt.Fprint(opt.output, opt.header); err != nil {
+	if _, err := fmt.Fprint(opt.Output, opt.Header); err != nil {
 		return err
 	}
 
-	if opt.commandsTitle != "" && len(opt.commands) > 0 {
-		if _, err := fmt.Fprint(opt.output, "\n", opt.commandsTitle, "\n"); err != nil {
+	if opt.CommandsTitle != "" && len(opt.commands) > 0 {
+		if _, err := fmt.Fprint(opt.Output, "\n", opt.CommandsTitle, "\n"); err != nil {
 			return err
 		}
 
@@ -185,14 +176,14 @@ func (opt *CmdOpt) usage() error {
 		for _, name := range cmds { // 保证顺序相同
 			cmd := opt.commands[name]
 			cmdName := name + strings.Repeat(" ", max-len(name))
-			if _, err := fmt.Fprintf(opt.output, "    %s%s\n", cmdName, cmd.title); err != nil {
+			if _, err := fmt.Fprintf(opt.Output, "    %s%s\n", cmdName, cmd.title); err != nil {
 				return err
 			}
 		}
 	}
 
-	if opt.footer != "" {
-		_, err := fmt.Fprint(opt.output, "\n", opt.footer)
+	if opt.Footer != "" {
+		_, err := fmt.Fprint(opt.Output, "\n", opt.Footer)
 		return err
 	}
 

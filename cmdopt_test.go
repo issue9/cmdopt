@@ -12,6 +12,23 @@ import (
 	"github.com/issue9/assert"
 )
 
+func newCmdOpt(
+	output io.Writer,
+	errHandling flag.ErrorHandling,
+	header, footer, options, commands string,
+	notFound func(string) string,
+) *CmdOpt {
+	return &CmdOpt{
+		ErrorHandling: errHandling,
+		Output:        output,
+		Header:        header,
+		Footer:        footer,
+		OptionsTitle:  options,
+		CommandsTitle: commands,
+		NotFound:      notFound,
+	}
+}
+
 func buildDo(text string) DoFunc {
 	return func(output io.Writer) error {
 		_, err := output.Write([]byte(text))
@@ -22,7 +39,7 @@ func buildDo(text string) DoFunc {
 func TestCmdOpt(t *testing.T) {
 	a := assert.New(t)
 	output := new(bytes.Buffer)
-	opt := New(output, flag.PanicOnError, "header\n", "footer\n", "options", "commands", func(string) string { return "not found" })
+	opt := newCmdOpt(output, flag.PanicOnError, "header\n", "footer\n", "options", "commands", func(string) string { return "not found" })
 	a.NotNil(opt)
 
 	fs1 := opt.New("test1test1", "test1 usage", buildDo("test1"))
@@ -64,12 +81,12 @@ footer
 	// Exec not-exists
 	output.Reset()
 	a.NotError(opt.Exec([]string{"not-exists"}))
-	a.True(strings.HasPrefix(output.String(), string(opt.notFound("not-exists"))))
+	a.True(strings.HasPrefix(output.String(), string(opt.NotFound("not-exists"))))
 
 	// Exec help 未注册
 	output.Reset()
 	a.NotError(opt.Exec([]string{"not-exists"}))
-	a.True(strings.HasPrefix(output.String(), string(opt.notFound("not-exists"))))
+	a.True(strings.HasPrefix(output.String(), string(opt.NotFound("not-exists"))))
 
 	// 注册 h
 	opt.Help("h", "usage")
@@ -79,12 +96,12 @@ footer
 	// Exec h not-exists
 	output.Reset()
 	a.NotError(opt.Exec([]string{"h", "not-exists"}))
-	a.True(strings.HasPrefix(output.String(), string(opt.notFound("not-exists"))))
+	a.True(strings.HasPrefix(output.String(), string(opt.NotFound("not-exists"))))
 
 	// Exec h
 	output.Reset()
 	a.NotError(opt.Exec([]string{"h", ""}))
-	a.True(strings.HasPrefix(output.String(), string(opt.notFound(""))))
+	a.True(strings.HasPrefix(output.String(), string(opt.NotFound(""))))
 
 	// Exec h h
 	output.Reset()

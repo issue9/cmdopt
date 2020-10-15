@@ -32,7 +32,7 @@ func (h *help) do(output io.Writer) error {
 		}
 	}
 
-	if _, err := output.Write([]byte(h.opt.notFound(name))); err != nil {
+	if _, err := output.Write([]byte(h.opt.NotFound(name))); err != nil {
 		return err
 	}
 	h.fs.Usage()
