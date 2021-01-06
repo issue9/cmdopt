@@ -8,7 +8,7 @@ cmdopt
 cmdopt 命令行选项的增强，可以轻松处理子命令。高度重用 flag 包。
 
 ```go
-opt := cmdopt.New(...)
+opt := &cmdopt.CmdOpt{}
 
 // 子命令 build，为一个 flag.FlagSet 实例
 build := opt.New("build", func(output io.Writer)error{
