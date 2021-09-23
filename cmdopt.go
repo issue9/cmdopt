@@ -24,20 +24,25 @@ type command struct {
 
 // CmdOpt 带子命令的命令行操作
 type CmdOpt struct {
-	// 表示输出的通道，此值必须指定；
+	// 表示输出的通道
+	//
+	// 此值必须指定；
 	Output io.Writer
 
-	// 表示出错时的处理方式，该值最终会被传递给子命令；
+	// 表示出错时的处理方式
+	//
+	// 该值最终会被传递给子命令； 为空则采用 flag.ContinueOnError
 	ErrorHandling flag.ErrorHandling
 
-	// Header、Footer、OptionsTitle 和 CommandsTitle 作为输出帮助信息中的部分内容，
-	// 由用户给出。
+	// Header、Footer、OptionsTitle 和 CommandsTitle 作为输出帮助信息中的部分内容
+	//
 	// 帮助信息的模板如下：
 	//  {Header}
 	//  {CommandsTitle}:
 	//      cmd1    cmd1 usage
 	//      cmd2    cmd2 usage
 	//  {Footer}
+	//
 	// 子命令的帮助信息模板如下：
 	//  usage
 	//  {OptionsTitle}:
@@ -94,7 +99,7 @@ func (opt *CmdOpt) New(name, usage string, do DoFunc) *flag.FlagSet {
 	if errors.Is(err, io.EOF) {
 		title = usage
 	} else {
-		title = string(bs)
+		title = bs
 		title = title[:len(title)-1]
 	}
 	opt.commands[name] = &command{
