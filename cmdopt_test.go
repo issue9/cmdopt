@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/issue9/assert"
+	"github.com/issue9/assert/v2"
 )
 
 func newCmdOpt(
@@ -37,7 +37,7 @@ func buildDo(text string) DoFunc {
 }
 
 func TestCmdOpt(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	output := new(bytes.Buffer)
 	opt := newCmdOpt(output, flag.PanicOnError, "header\n", "footer\n", "options", "commands", func(string) string { return "not found" })
 	a.NotNil(opt)
@@ -81,12 +81,12 @@ footer
 	// Exec not-exists
 	output.Reset()
 	a.NotError(opt.Exec([]string{"not-exists"}))
-	a.True(strings.HasPrefix(output.String(), string(opt.NotFound("not-exists"))))
+	a.True(strings.HasPrefix(output.String(), opt.NotFound("not-exists")))
 
 	// Exec help 未注册
 	output.Reset()
 	a.NotError(opt.Exec([]string{"not-exists"}))
-	a.True(strings.HasPrefix(output.String(), string(opt.NotFound("not-exists"))))
+	a.True(strings.HasPrefix(output.String(), opt.NotFound("not-exists")))
 
 	// 注册 h
 	opt.Help("h", "usage")
@@ -96,12 +96,12 @@ footer
 	// Exec h not-exists
 	output.Reset()
 	a.NotError(opt.Exec([]string{"h", "not-exists"}))
-	a.True(strings.HasPrefix(output.String(), string(opt.NotFound("not-exists"))))
+	a.True(strings.HasPrefix(output.String(), opt.NotFound("not-exists")))
 
 	// Exec h
 	output.Reset()
 	a.NotError(opt.Exec([]string{"h", ""}))
-	a.True(strings.HasPrefix(output.String(), string(opt.NotFound(""))))
+	a.True(strings.HasPrefix(output.String(), opt.NotFound("")))
 
 	// Exec h h
 	output.Reset()
