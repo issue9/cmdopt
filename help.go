@@ -20,8 +20,7 @@ func (opt *CmdOpt) Help(name, usage string) {
 
 func (h *help) do(output io.Writer) error {
 	if h.fs.NArg() == 0 {
-		h.fs.Usage()
-		return nil
+		return h.opt.usage()
 	}
 
 	name := h.fs.Arg(0)
@@ -32,9 +31,6 @@ func (h *help) do(output io.Writer) error {
 		}
 	}
 
-	if _, err := output.Write([]byte(h.opt.NotFound(name))); err != nil {
-		return err
-	}
-	h.fs.Usage()
-	return nil
+	_, err := output.Write([]byte(h.opt.NotFound(name)))
+	return err
 }

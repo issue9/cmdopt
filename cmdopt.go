@@ -133,11 +133,9 @@ func (opt *CmdOpt) Exec(args []string) error {
 	cmd, found := opt.commands[name]
 	if !found {
 		if opt.NotFound != nil {
-			if _, err := opt.Output.Write([]byte(opt.NotFound(name))); err != nil {
-				return err
-			}
+			_, err := opt.Output.Write([]byte(opt.NotFound(name)))
+			return err
 		}
-		return opt.usage()
 	}
 
 	if err := cmd.Parse(args); err != nil {
