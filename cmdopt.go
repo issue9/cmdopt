@@ -123,6 +123,10 @@ func hasFlag(fs *flag.FlagSet) bool {
 //
 // args 第一个元素应该是子命令名称。
 func (opt *CmdOpt) Exec(args []string) error {
+	if opt.Output == nil {
+		panic("CmdOpt.Output 不能为空")
+	}
+
 	if len(args) == 0 {
 		return opt.usage()
 	}
