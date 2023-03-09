@@ -3,13 +3,13 @@ cmdopt
 [![license](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](https://opensource.org/licenses/MIT)
 [![codecov](https://codecov.io/gh/issue9/cmdopt/branch/master/graph/badge.svg)](https://codecov.io/gh/issue9/cmdopt)
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/issue9/cmdopt)](https://pkg.go.dev/github.com/issue9/cmdopt)
-![Go version](https://img.shields.io/github/go-mod/go-version/issue9/web)
+![Go version](https://img.shields.io/github/go-mod/go-version/issue9/cmdopt)
 ======
 
 cmdopt 命令行选项的增强，可以轻松处理子命令。高度重用 flag 包。
 
 ```go
-opt := &cmdopt.CmdOpt{}
+opt := &cmdopt.New(...)
 
 // 子命令 build，为一个 flag.FlagSet 实例
 build := opt.New("build", func(output io.Writer)error{
