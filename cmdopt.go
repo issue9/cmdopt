@@ -34,7 +34,7 @@ type cmdopt struct {
 //   - {{flags}} 参数说明，输出时被参数替换，如果没有可以为空；
 //   - {{commands}} 子命令说明，输出时被子命令列表替换，如果没有可以为空；
 //
-// notFound 表示找不到子命令时需要返回的文字说明；
+// notFound 表示找不到子命令时需要返回的文字说明，若为空，则采用 usageTemplate 处理后的内容；
 func New(output io.Writer, errorHandling flag.ErrorHandling, usageTemplate string, do DoFunc, notFound func(string) string) CmdOpt {
 	fs := flag.NewFlagSet("", errorHandling)
 	fs.SetOutput(output)
@@ -108,7 +108,7 @@ func (opt *cmdopt) Exec(args []string) error {
 	}
 
 	name := args[0]
-	if name[0] == '-' {
+	if name[0] == '-' { // 非子命令模式
 		return opt.command.exec(opt.Output(), args)
 	}
 
@@ -120,8 +120,7 @@ func (opt *cmdopt) Exec(args []string) error {
 		_, err := io.WriteString(opt.Output(), opt.notFound(name))
 		return err
 	}
-	opt.command.Usage()
-	return nil
+	return opt.usage()
 }
 
 func (opt *cmdopt) usage() error {
@@ -130,7 +129,7 @@ func (opt *cmdopt) usage() error {
 	for _, name := range opt.Commands() { // 保证顺序相同
 		cmd := opt.commands[name]
 		cmdName := name + strings.Repeat(" ", opt.maxCmdLen+3-len(name)) // 为子命令名称留下的最小长度
-		if _, err := fmt.Fprintf(&commands, "    %s%s\n", cmdName, cmd.title); err != nil {
+		if _, err := fmt.Fprintf(&commands, "  %s%s\n", cmdName, cmd.title); err != nil {
 			return err
 		}
 	}

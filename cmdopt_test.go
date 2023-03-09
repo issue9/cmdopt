@@ -23,8 +23,10 @@ func notFound(string) string { return "not found" }
 func TestCmdOpt(t *testing.T) {
 	a := assert.New(t, false)
 	output := new(bytes.Buffer)
-	opt := New(output, flag.PanicOnError, "header\n{{flags}}\ncommands\n{{commands}}\nfooter", buildDo("def"), notFound)
+	opt := New(output, flag.PanicOnError, "header\noptions\n{{flags}}\ncommands\n{{commands}}\nfooter", buildDo("def"), notFound)
 	a.NotNil(opt)
+
+	opt.Int("int", 0, "int usage")
 
 	fs1 := opt.New("test1test1", "test1 usage\n{{flags}}", buildDo("test1"))
 	a.NotNil(fs1)
@@ -79,11 +81,14 @@ func TestCmdOpt(t *testing.T) {
 	output.Reset()
 	a.NotError(opt.Exec([]string{"h"}))
 	a.Equal(output.String(), `header
+options
+  -int int
+    	int usage
 
 commands
-    h            usage
-    t2           test2 usage
-    test1test1   test1 usage
+  h            usage
+  t2           test2 usage
+  test1test1   test1 usage
 
 footer
 `)
@@ -92,4 +97,9 @@ footer
 	output.Reset()
 	a.NotError(opt.Exec([]string{"h", "h"}))
 	a.Equal(output.String(), "usage\n")
+
+	// 非子命令模式 Exec -arg1=xx
+	output.Reset()
+	a.NotError(opt.Exec([]string{"-int", "5"}))
+	a.Equal(output.String(), "def")
 }
