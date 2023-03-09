@@ -69,23 +69,21 @@ type CmdOpt struct {
 // name 为子命令的名称，必须唯一；
 // do 为该条子命令执行的函数体；
 // usage 为该条子命令的帮助内容输出，当 usage 为多行是，其第一行作为此命令的摘要信息。
-//
-// 返回 [flag.FlagSet]，不需要手动调用 FlagSet.Parse，该方法会在执行时自动执行。
-// FlagSet.Args 返回的是包含了子命令在内容的所有内容。
-func (opt *CmdOpt) New(name, usage string, do DoFunc) *flag.FlagSet {
-	fs := flag.NewFlagSet(name, opt.ErrorHandling)
-	opt.Add(name, usage, do, fs)
-	return fs
+func (opt *CmdOpt) New(name, usage string, do DoFunc) FlagSet {
+	return opt.Add(flag.NewFlagSet(name, opt.ErrorHandling), do, usage)
 }
 
 // Add 添加一条新的子命令
 //
 // 参数说明可参考 [CmdOpt.New]。
-func (opt *CmdOpt) Add(name, usage string, do DoFunc, fs *flag.FlagSet) {
+// 子命令的名称根据 fs.Name 获取。
+// NOTE: 这会托管 fs 的 Output、ErrorHandling 以及 Usage 对象。
+func (opt *CmdOpt) Add(fs *flag.FlagSet, do DoFunc, usage string) FlagSet {
 	if opt.commands == nil {
 		opt.commands = make(map[string]*command, 10)
 	}
 
+	name := fs.Name()
 	if _, found := opt.commands[name]; found {
 		panic(fmt.Sprintf("存在相同名称的子命令：%s", name))
 	}
@@ -93,6 +91,7 @@ func (opt *CmdOpt) Add(name, usage string, do DoFunc, fs *flag.FlagSet) {
 		panic("参数 usage 不能为空")
 	}
 
+	fs.Init(name, opt.ErrorHandling)
 	fs.SetOutput(opt.Output)
 	fs.Usage = func() {
 		fmt.Fprint(opt.Output, usage)
@@ -118,6 +117,8 @@ func (opt *CmdOpt) Add(name, usage string, do DoFunc, fs *flag.FlagSet) {
 	if l := len(name); l > opt.maxCmdLen {
 		opt.maxCmdLen = l
 	}
+
+	return fs
 }
 
 func hasFlag(fs *flag.FlagSet) bool {

@@ -2,13 +2,10 @@
 
 package cmdopt
 
-import (
-	"flag"
-	"io"
-)
+import "io"
 
 type help struct {
-	fs  *flag.FlagSet
+	fs  FlagSet
 	opt *CmdOpt
 }
 
