@@ -12,37 +12,21 @@ import (
 	"github.com/issue9/assert/v3"
 )
 
-func newCmdOpt(
-	output io.Writer,
-	errHandling flag.ErrorHandling,
-	header, footer, options, commands string,
-	notFound func(string) string,
-) *CmdOpt {
-	return &CmdOpt{
-		ErrorHandling: errHandling,
-		Output:        output,
-		Header:        header,
-		Footer:        footer,
-		OptionsTitle:  options,
-		CommandsTitle: commands,
-		NotFound:      notFound,
-	}
-}
-
 func buildDo(text string) DoFunc {
 	return func(output io.Writer) error {
 		_, err := output.Write([]byte(text))
 		return err
 	}
 }
+func notFound(string) string { return "not found" }
 
 func TestCmdOpt(t *testing.T) {
 	a := assert.New(t, false)
 	output := new(bytes.Buffer)
-	opt := newCmdOpt(output, flag.PanicOnError, "header\n", "footer\n", "options", "commands", func(string) string { return "not found" })
+	opt := New(output, flag.PanicOnError, "header\n{{flags}}\ncommands\n{{commands}}\nfooter", buildDo("def"), notFound)
 	a.NotNil(opt)
 
-	fs1 := opt.New("test1test1", "test1 usage", buildDo("test1"))
+	fs1 := opt.New("test1test1", "test1 usage\n{{flags}}", buildDo("test1"))
 	a.NotNil(fs1)
 	v := false
 	fs1.BoolVar(&v, "v", false, "usage")
@@ -69,24 +53,17 @@ func TestCmdOpt(t *testing.T) {
 	// Exec
 	output.Reset()
 	a.NotError(opt.Exec([]string{}))
-	a.Equal(output.String(), `header
-
-commands
-    t2           test2 usage
-    test1test1   test1 usage
-
-footer
-`)
+	a.Equal(output.String(), "def")
 
 	// Exec not-exists
 	output.Reset()
 	a.NotError(opt.Exec([]string{"not-exists"}))
-	a.True(strings.HasPrefix(output.String(), opt.NotFound("not-exists")))
+	a.True(strings.HasPrefix(output.String(), notFound("not-exists")))
 
 	// Exec help 未注册
 	output.Reset()
 	a.NotError(opt.Exec([]string{"not-exists"}))
-	a.True(strings.HasPrefix(output.String(), opt.NotFound("not-exists")))
+	a.True(strings.HasPrefix(output.String(), notFound("not-exists")))
 
 	// 注册 h
 	opt.Help("h", "usage")
@@ -96,15 +73,23 @@ footer
 	// Exec h not-exists
 	output.Reset()
 	a.NotError(opt.Exec([]string{"h", "not-exists"}))
-	a.True(strings.HasPrefix(output.String(), opt.NotFound("not-exists")))
+	a.True(strings.HasPrefix(output.String(), notFound("not-exists")))
 
 	// Exec h
 	output.Reset()
-	a.NotError(opt.Exec([]string{"h", ""}))
-	a.True(strings.HasPrefix(output.String(), opt.NotFound("")))
+	a.NotError(opt.Exec([]string{"h"}))
+	a.Equal(output.String(), `header
+
+commands
+    h            usage
+    t2           test2 usage
+    test1test1   test1 usage
+
+footer
+`)
 
 	// Exec h h
 	output.Reset()
 	a.NotError(opt.Exec([]string{"h", "h"}))
-	a.Equal(output.String(), "usage")
+	a.Equal(output.String(), "usage\n")
 }
