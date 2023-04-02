@@ -19,9 +19,9 @@ type help struct {
 	opt *cmdopt
 }
 
-func (opt *cmdopt) Help(name, usage string) {
+func (opt *cmdopt) Help(name, title, usage string) {
 	h := &help{opt: opt}
-	h.fs = opt.New(name, usage, h.do)
+	h.fs = opt.New(name, title, usage, h.do)
 }
 
 func (h *help) do(output io.Writer) error {

@@ -5,7 +5,6 @@ package cmdopt
 
 import (
 	"bytes"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -47,28 +46,17 @@ func New(output io.Writer, errorHandling flag.ErrorHandling, usageTemplate strin
 	}
 }
 
-func (opt *cmdopt) New(name, usage string, do DoFunc) FlagSet {
-	return opt.Add(flag.NewFlagSet(name, opt.ErrorHandling()), do, usage)
+func (opt *cmdopt) New(name, title, usage string, do DoFunc) FlagSet {
+	return opt.Add(flag.NewFlagSet(name, opt.ErrorHandling()), do, title, usage)
 }
 
-func (opt *cmdopt) Add(fs *flag.FlagSet, do DoFunc, usage string) FlagSet {
+func (opt *cmdopt) Add(fs *flag.FlagSet, do DoFunc, title, usage string) FlagSet {
 	name := fs.Name()
 	if _, found := opt.commands[name]; found {
 		panic(fmt.Sprintf("存在相同名称的子命令：%s", name))
 	}
 	if usage == "" {
 		panic("参数 usage 不能为空")
-	}
-
-	var title string
-	bs, err := bytes.NewBufferString(usage).ReadString('\n')
-	if errors.Is(err, io.EOF) {
-		title = usage
-	} else {
-		title = bs[:len(bs)-1] // 去掉换行符
-	}
-	if strings.Contains(title, "{{flags}}") {
-		panic("usage 第一行中不能包含 {{flags}}")
 	}
 
 	fs.Init(name, opt.ErrorHandling())

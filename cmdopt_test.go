@@ -28,16 +28,16 @@ func TestCmdOpt(t *testing.T) {
 
 	opt.Int("int", 0, "int usage")
 
-	fs1 := opt.New("test1test1", "test1 usage\n{{flags}}", buildDo("test1"))
+	fs1 := opt.New("test1test1", "test1", "test1 usage\n{{flags}}", buildDo("test1"))
 	a.NotNil(fs1)
 	v := false
 	fs1.BoolVar(&v, "v", false, "usage")
 
 	a.Panic(func() {
-		opt.New("test1test1", "usage", buildDo("test1"))
+		opt.New("test1test1", "test1", "usage", buildDo("test1"))
 	})
 
-	fs2 := opt.New("t2", "test2 usage\nline2", buildDo("test2"))
+	fs2 := opt.New("t2", "test2", "test2 usage\nline2", buildDo("test2"))
 	a.NotNil(fs2)
 
 	cmds := opt.Commands()
@@ -68,7 +68,7 @@ func TestCmdOpt(t *testing.T) {
 	a.True(strings.HasPrefix(output.String(), notFound("not-exists")))
 
 	// 注册 h
-	opt.Help("h", "usage")
+	opt.Help("h", "h-title", "usage")
 	output.Reset()
 	a.NotError(opt.Exec([]string{"h", "test1"}))
 
@@ -86,9 +86,9 @@ options
     	int usage
 
 commands
-  h            usage
-  t2           test2 usage
-  test1test1   test1 usage
+  h            h-title
+  t2           test2
+  test1test1   test1
 
 footer
 `)
