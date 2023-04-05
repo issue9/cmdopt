@@ -59,7 +59,9 @@ func New(output io.Writer, errorHandling flag.ErrorHandling, usageTemplate strin
 		commands:      make(map[string]*command, 10),
 	}
 
-	fs.Usage = opt.usage
+	fs.Usage = func() {
+		fmt.Fprintln(opt.cmd.fs.Output(), opt.usage())
+	}
 
 	return opt
 }
@@ -78,17 +80,19 @@ func (opt *CmdOpt) New(name, title, usage string, cmd CommandFunc) {
 	if usage == "" {
 		panic("参数 usage 不能为空")
 	}
+	usage = strings.ReplaceAll(usage, "{{flags}}", getFlags(fs))
 
 	fs.Init(name, opt.cmd.fs.ErrorHandling())
 	fs.SetOutput(opt.cmd.fs.Output())
 	fs.Usage = func() {
-		fmt.Fprintln(opt.cmd.fs.Output(), strings.ReplaceAll(usage, "{{flags}}", getFlags(fs)))
+		fmt.Fprintln(opt.cmd.fs.Output(), usage)
 	}
 
 	opt.commands[name] = &command{
 		fs:    fs,
 		do:    cmd(fs),
 		title: title,
+		usage: usage,
 	}
 
 	if l := len(name); l > opt.maxCmdLen {
@@ -107,7 +111,7 @@ func getFlags(fs *flag.FlagSet) string {
 
 // Exec 执行命令行程序
 //
-// args 参数列表，比如 os.Args[1:]。
+// args 参数列表，不包含应用名称，比如 os.Args[1:]。
 func (opt *CmdOpt) Exec(args []string) error {
 	// NOTE: 让用户提供参数，而不是直接产从 os.Args 中取，可以方便用户作一些调试操作。
 
@@ -117,26 +121,28 @@ func (opt *CmdOpt) Exec(args []string) error {
 	opt.execed = true
 
 	if len(args) == 0 {
-		return opt.cmd.exec(opt.cmd.fs.Output(), nil)
+		return opt.cmd.exec(nil)
 	}
 
 	name := args[0]
 	if name[0] == '-' { // 非子命令模式
-		return opt.cmd.exec(opt.cmd.fs.Output(), args)
+		return opt.cmd.exec(args)
 	}
 
 	if cmd, found := opt.commands[name]; found {
-		return cmd.exec(opt.cmd.fs.Output(), args[1:])
+		return cmd.exec(args[1:])
 	}
+
 	if opt.notFound != nil {
 		_, err := io.WriteString(opt.cmd.fs.Output(), opt.notFound(name))
 		return err
 	}
+
 	opt.cmd.fs.Usage()
 	return nil
 }
 
-func (opt *CmdOpt) usage() {
+func (opt *CmdOpt) usage() string {
 	flags := getFlags(opt.cmd.fs)
 	var commands bytes.Buffer
 	for _, name := range opt.Commands() { // 保证顺序相同
@@ -147,5 +153,6 @@ func (opt *CmdOpt) usage() {
 
 	usage := strings.ReplaceAll(opt.usageTemplate, "{{flags}}", flags)
 	usage = strings.ReplaceAll(usage, "{{commands}}", commands.String())
-	fmt.Fprintln(opt.cmd.fs.Output(), usage)
+
+	return usage
 }

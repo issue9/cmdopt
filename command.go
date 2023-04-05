@@ -12,6 +12,7 @@ type command struct {
 	fs    *flag.FlagSet
 	do    DoFunc
 	title string
+	usage string
 }
 
 type help struct {
@@ -32,7 +33,7 @@ func (h *help) command(fs FlagSet) DoFunc {
 		}
 
 		name := fs.Arg(0)
-		for _, cmd := range h.opt.Commands() { // 调用 opt.Commands() 而不是 opt.commands，可以保证顺序一致。
+		for _, cmd := range h.opt.Commands() { // h.opt.Commands() 可以保证顺序一致。
 			if cmd == name {
 				h.opt.commands[cmd].fs.Usage()
 				return nil
@@ -45,7 +46,7 @@ func (h *help) command(fs FlagSet) DoFunc {
 }
 
 // args 表示参数列表，第一个元素为子命令名称
-func (cmd *command) exec(output io.Writer, args []string) error {
+func (cmd *command) exec(args []string) error {
 	if cmd.do == nil { // 空的子命令
 		return nil
 	}
@@ -53,9 +54,10 @@ func (cmd *command) exec(output io.Writer, args []string) error {
 	if err := cmd.fs.Parse(args); err != nil {
 		return err
 	}
-	return cmd.do(output)
+	return cmd.do(cmd.fs.Output())
 }
 
+// Commands 返回所有的子命令
 func (opt *CmdOpt) Commands() []string {
 	keys := make([]string, 0, len(opt.commands))
 	for key := range opt.commands {
