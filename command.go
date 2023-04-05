@@ -9,46 +9,54 @@ import (
 )
 
 type command struct {
-	*flag.FlagSet
+	fs    *flag.FlagSet
 	do    DoFunc
 	title string
 }
 
 type help struct {
-	fs  FlagSet
-	opt *cmdopt
+	opt *CmdOpt
 }
 
-func (opt *cmdopt) Help(name, title, usage string) {
+// Help 注册 help 子命令
+func (opt *CmdOpt) Help(name, title, usage string) {
 	h := &help{opt: opt}
-	h.fs = opt.New(name, title, usage, h.do)
+	opt.New(name, title, usage, h.command)
 }
 
-func (h *help) do(output io.Writer) error {
-	if h.fs.NArg() == 0 {
-		return h.opt.usage()
-	}
-
-	name := h.fs.Arg(0)
-	for _, cmd := range h.opt.Commands() { // 调用 opt.Commands() 而不是 opt.commands，可以保证顺序一致。
-		if cmd == name {
-			h.opt.commands[cmd].Usage()
+func (h *help) command(fs FlagSet) DoFunc {
+	return func(output io.Writer) error {
+		if fs.NArg() == 0 {
+			h.opt.cmd.fs.Usage()
 			return nil
 		}
-	}
 
-	_, err := output.Write([]byte(h.opt.notFound(name)))
-	return err
+		name := fs.Arg(0)
+		for _, cmd := range h.opt.Commands() { // 调用 opt.Commands() 而不是 opt.commands，可以保证顺序一致。
+			if cmd == name {
+				h.opt.commands[cmd].fs.Usage()
+				return nil
+			}
+		}
+
+		_, err := output.Write([]byte(h.opt.notFound(name)))
+		return err
+	}
 }
 
+// args 表示参数列表，第一个元素为子命令名称
 func (cmd *command) exec(output io.Writer, args []string) error {
-	if err := cmd.Parse(args); err != nil {
+	if cmd.do == nil { // 空的子命令
+		return nil
+	}
+
+	if err := cmd.fs.Parse(args); err != nil {
 		return err
 	}
 	return cmd.do(output)
 }
 
-func (opt *cmdopt) Commands() []string {
+func (opt *CmdOpt) Commands() []string {
 	keys := make([]string, 0, len(opt.commands))
 	for key := range opt.commands {
 		keys = append(keys, key)

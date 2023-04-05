@@ -9,36 +9,7 @@ import (
 	"time"
 )
 
-type CmdOpt interface {
-	FlagSet
-
-	// New 注册一条新的子命令
-	//
-	// name 为子命令的名称，必须唯一；
-	// do 为该条子命令执行的函数体；
-	// usage 为该条子命令的帮助内容。可以包含 {{flags}} 占位符，表示参数信息。
-	New(name, title, usage string, do DoFunc) FlagSet
-
-	// Add 添加一条新的子命令
-	//
-	// 参数说明可参考 [CmdOpt.New]。
-	// 子命令的名称根据 fs.Name 获取。
-	// NOTE: 这会托管 fs 的 Output、ErrorHandling 以及 Usage 对象。
-	Add(fs *flag.FlagSet, do DoFunc, title, usage string) FlagSet
-
-	// Commands 所有的子命令列表
-	Commands() []string
-
-	// Exec 执行命令行程序
-	//
-	// args 忽略程序名之后的参数列表，比如 os.Args[1:]。
-	Exec(args []string) error
-
-	// Help 注册 help 子命令
-	Help(name, title, usage string)
-}
-
-// FlagSet 子命令操作返回的接口
+// FlagSet 这是 [flag.FlagSet] 的子集
 type FlagSet interface {
 	Arg(i int) string
 	Args() []string
