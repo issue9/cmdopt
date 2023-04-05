@@ -125,18 +125,18 @@ func TestCmdOpt_Exec(t *testing.T) {
 
 	// 注册 h
 	opt, output = newOpt(a)
-	opt.Help("h", "h-title", "help usage")
+	opt.New("h", "h-title", "help usage", Help(opt))
 	a.NotError(opt.Exec([]string{"h", "test1"}))
 
 	// Exec h not-exists
 	opt, output = newOpt(a)
-	opt.Help("h", "h-title", "help usage")
+	opt.New("h", "h-title", "help usage", Help(opt))
 	a.NotError(opt.Exec([]string{"h", "not-exists"}))
 	a.True(strings.HasPrefix(output.String(), notFound("not-exists")), output.String())
 
 	// Exec h
 	opt, output = newOpt(a)
-	opt.Help("h", "h-title", "help usage")
+	opt.New("h", "h-title", "help usage", Help(opt))
 	a.NotError(opt.Exec([]string{"h"}))
 	a.Equal(output.String(), `header
 options
@@ -153,7 +153,7 @@ footer
 
 	// Exec h h
 	opt, output = newOpt(a)
-	opt.Help("h", "h-title", "help usage")
+	opt.New("h", "h-title", "help usage", Help(opt))
 	a.NotError(opt.Exec([]string{"h", "h"}))
 	a.Equal(output.String(), "help usage\n")
 

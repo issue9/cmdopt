@@ -15,33 +15,26 @@ type command struct {
 	usage string
 }
 
-type help struct {
-	opt *CmdOpt
-}
-
 // Help 注册 help 子命令
-func (opt *CmdOpt) Help(name, title, usage string) {
-	h := &help{opt: opt}
-	opt.New(name, title, usage, h.command)
-}
-
-func (h *help) command(fs *flag.FlagSet) DoFunc {
-	return func(output io.Writer) error {
-		if fs.NArg() == 0 {
-			h.opt.cmd.fs.Usage()
-			return nil
-		}
-
-		name := fs.Arg(0)
-		for _, cmd := range h.opt.Commands() { // h.opt.Commands() 可以保证顺序一致。
-			if cmd == name {
-				h.opt.commands[cmd].fs.Usage()
+func Help(opt *CmdOpt) CommandFunc {
+	return func(fs *flag.FlagSet) DoFunc {
+		return func(output io.Writer) error {
+			if fs.NArg() == 0 {
+				opt.cmd.fs.Usage()
 				return nil
 			}
-		}
 
-		_, err := output.Write([]byte(h.opt.notFound(name)))
-		return err
+			name := fs.Arg(0)
+			for _, cmd := range opt.Commands() { // h.opt.Commands() 可以保证顺序一致。
+				if cmd == name {
+					opt.commands[cmd].fs.Usage()
+					return nil
+				}
+			}
+
+			_, err := output.Write([]byte(opt.notFound(name)))
+			return err
+		}
 	}
 }
 

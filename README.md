@@ -12,13 +12,23 @@ cmdopt 命令行选项的增强，可以轻松处理子命令。高度重用 fla
 opt := &cmdopt.New(...)
 
 // 子命令 build，为一个 flag.FlagSet 实例
-build := opt.New("build", func(output io.Writer)error{
-    output.Write([]byte("build"))
+build := opt.New("build", "title", "usage", func(f *flag.FlagSet) DoFunc {
+    v := f.Bool("v", "false", ...)
+
+    return func(output io.Writer)error{
+        if v {
+            ...
+        } else {
+            output.Write([]byte("build"))
+        }
+    }
 })
 
 // 子命令 install
-install := opt.New("install", func(output io.Writer)error{
-    output.Write([]byte("install"))
+install := opt.New("install", "title", "usage", func(*flag.FlagSet) DoFunc {
+    return func(output io.Writer)error{
+        output.Write([]byte("install"))
+    }
 })
 ```
 
