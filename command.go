@@ -67,3 +67,13 @@ func (opt *CmdOpt) Commands() []string {
 	sort.Strings(keys)
 	return keys
 }
+
+// Command 返回指定的命令的说明
+func (opt *CmdOpt) Command(name string) (title, usage string, found bool) {
+	for k, v := range opt.commands {
+		if k == name {
+			return v.title, v.usage, true
+		}
+	}
+	return "", "", false
+}
