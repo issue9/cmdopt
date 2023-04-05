@@ -25,7 +25,7 @@ func (opt *CmdOpt) Help(name, title, usage string) {
 	opt.New(name, title, usage, h.command)
 }
 
-func (h *help) command(fs FlagSet) DoFunc {
+func (h *help) command(fs *flag.FlagSet) DoFunc {
 	return func(output io.Writer) error {
 		if fs.NArg() == 0 {
 			h.opt.cmd.fs.Usage()

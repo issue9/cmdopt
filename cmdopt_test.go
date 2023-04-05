@@ -20,7 +20,7 @@ func TestCmdOpt_New(t *testing.T) {
 	opt := New(output, flag.PanicOnError, "header\noptions\n{{flags}}\ncommands\n{{commands}}\nfooter", nil, notFound)
 	a.NotNil(opt)
 
-	opt.New("test1test1", "test1", "test1 usage\n{{flags}}", func(fs FlagSet) DoFunc {
+	opt.New("test1test1", "test1", "test1 usage\n{{flags}}", func(fs *flag.FlagSet) DoFunc {
 		return func(w io.Writer) error {
 			_, err := w.Write([]byte("test1"))
 			return err
@@ -28,12 +28,12 @@ func TestCmdOpt_New(t *testing.T) {
 	})
 
 	a.Panic(func() {
-		opt.New("test1test1", "test1", "usage", func(fs FlagSet) DoFunc {
+		opt.New("test1test1", "test1", "usage", func(fs *flag.FlagSet) DoFunc {
 			return func(w io.Writer) error { return nil }
 		})
 	})
 
-	opt.New("t2", "test2", "test2 usage\nline2", func(fs FlagSet) DoFunc {
+	opt.New("t2", "test2", "test2 usage\nline2", func(fs *flag.FlagSet) DoFunc {
 		return func(w io.Writer) error {
 			_, err := w.Write([]byte("test2"))
 			return err
@@ -46,7 +46,7 @@ func TestCmdOpt_Exec(t *testing.T) {
 
 	newOpt := func(a *assert.Assertion) (*CmdOpt, *bytes.Buffer) {
 		output := new(bytes.Buffer)
-		cmd := func(fs FlagSet) DoFunc {
+		cmd := func(fs *flag.FlagSet) DoFunc {
 			fs.Int("int", 0, "int usage")
 
 			return func(w io.Writer) error {
@@ -57,7 +57,7 @@ func TestCmdOpt_Exec(t *testing.T) {
 		opt := New(output, flag.PanicOnError, "header\noptions\n{{flags}}\ncommands\n{{commands}}\nfooter", cmd, notFound)
 		a.NotNil(opt)
 
-		opt.New("test1test1", "test1", "test1 usage\n{{flags}}", func(fs FlagSet) DoFunc {
+		opt.New("test1test1", "test1", "test1 usage\n{{flags}}", func(fs *flag.FlagSet) DoFunc {
 			v := false
 			fs.BoolVar(&v, "v", false, "usage")
 
@@ -71,7 +71,7 @@ func TestCmdOpt_Exec(t *testing.T) {
 			}
 		})
 
-		opt.New("t2", "test2", "test2 usage\nline2", func(fs FlagSet) DoFunc {
+		opt.New("t2", "test2", "test2 usage\nline2", func(fs *flag.FlagSet) DoFunc {
 			return func(w io.Writer) error {
 				_, err := w.Write([]byte("test2"))
 				return err

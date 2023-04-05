@@ -26,7 +26,7 @@ type CmdOpt struct {
 //
 // FlagSet 可用于绑定各个命令行参数；
 // 返回值 [DoFunc] 表示实际执行的函数；
-type CommandFunc = func(FlagSet) DoFunc
+type CommandFunc = func(*flag.FlagSet) DoFunc
 
 type DoFunc = func(io.Writer) error
 
