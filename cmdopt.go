@@ -156,3 +156,13 @@ func (opt *CmdOpt) usage() string {
 
 	return usage
 }
+
+// SetOutput 设置输出通道
+func (opt *CmdOpt) SetOutput(w io.Writer) {
+	opt.cmd.fs.SetOutput(w)
+	for _, c := range opt.commands {
+		c.fs.SetOutput(w)
+	}
+}
+
+func (opt *CmdOpt) Output() io.Writer { return opt.cmd.fs.Output() }

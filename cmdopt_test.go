@@ -162,3 +162,23 @@ footer
 	a.NotError(opt.Exec([]string{"-int", "5"}))
 	a.Equal(output.String(), "def")
 }
+
+func TestCmdOpt_Output(t *testing.T) {
+	a := assert.New(t, false)
+
+	o1 := new(bytes.Buffer)
+	opt := New(o1, flag.ContinueOnError, "", nil, nil)
+	opt.New("c1", "title", "usage", func(fs *flag.FlagSet) DoFunc {
+		return func(w io.Writer) error {
+			_, err := w.Write([]byte("c1"))
+			return err
+		}
+	})
+	a.Equal(opt.Output(), o1)
+
+	o2 := new(strings.Builder)
+	opt.SetOutput(o2)
+	a.Equal(opt.Output(), o2)
+	opt.Exec([]string{"c1"})
+	a.Equal(o2.String(), "c1").Empty(o1.String())
+}
