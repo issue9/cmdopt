@@ -61,7 +61,7 @@ func New(output io.Writer, errorHandling flag.ErrorHandling, usageTemplate strin
 	}
 
 	fs.Usage = func() {
-		fmt.Fprint(opt.cmd.fs.Output(), opt.usage())
+		fmt.Fprint(opt.cmd.fs.Output(), opt.Usage())
 	}
 
 	return opt
@@ -132,7 +132,7 @@ func (opt *CmdOpt) Exec(args []string) error {
 	if name[0] == '-' { // 非子命令模式
 		err := opt.cmd.exec(args)
 		if errors.Is(err, flag.ErrHelp) {
-			fmt.Fprint(opt.cmd.fs.Output(), opt.usage())
+			fmt.Fprint(opt.cmd.fs.Output(), opt.Usage())
 			return nil
 		}
 		return err
@@ -151,7 +151,10 @@ func (opt *CmdOpt) Exec(args []string) error {
 	return nil
 }
 
-func (opt *CmdOpt) usage() string {
+// Usage 整个项目的使用说明内容
+//
+// 基于 [New] 的 usage 参数，里面的占位符会被真实的内容所覆盖。
+func (opt *CmdOpt) Usage() string {
 	flags := getFlags(opt.cmd.fs)
 	var commands bytes.Buffer
 	for _, name := range opt.Commands() { // 保证顺序相同
