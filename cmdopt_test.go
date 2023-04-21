@@ -126,7 +126,7 @@ func TestCmdOpt_Exec(t *testing.T) {
 	// 注册 h
 	opt, output = newOpt(a)
 	opt.New("h", "h-title", "help usage", Help(opt))
-	a.NotError(opt.Exec([]string{"h", "test1"}))
+	a.NotError(opt.Exec([]string{"h", "test1"})).Equal(output.String(), "not found test1")
 
 	// Exec h not-exists
 	opt, output = newOpt(a)

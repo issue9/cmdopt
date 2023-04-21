@@ -5,6 +5,7 @@ package cmdopt
 
 import (
 	"bytes"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -60,7 +61,7 @@ func New(output io.Writer, errorHandling flag.ErrorHandling, usageTemplate strin
 	}
 
 	fs.Usage = func() {
-		fmt.Fprintln(opt.cmd.fs.Output(), opt.usage())
+		fmt.Fprint(opt.cmd.fs.Output(), opt.usage())
 	}
 
 	return opt
@@ -81,11 +82,14 @@ func (opt *CmdOpt) New(name, title, usage string, cmd CommandFunc) {
 		panic("参数 usage 不能为空")
 	}
 	usage = strings.ReplaceAll(usage, "{{flags}}", getFlags(fs))
+	if usage[len(usage)-1] != '\n' {
+		usage += "\n"
+	}
 
 	fs.Init(name, opt.cmd.fs.ErrorHandling())
 	fs.SetOutput(opt.cmd.fs.Output())
 	fs.Usage = func() {
-		fmt.Fprintln(opt.cmd.fs.Output(), usage)
+		fmt.Fprint(opt.cmd.fs.Output(), usage)
 	}
 
 	opt.commands[name] = &command{
@@ -126,7 +130,12 @@ func (opt *CmdOpt) Exec(args []string) error {
 
 	name := args[0]
 	if name[0] == '-' { // 非子命令模式
-		return opt.cmd.exec(args)
+		err := opt.cmd.exec(args)
+		if errors.Is(err, flag.ErrHelp) {
+			fmt.Fprint(opt.cmd.fs.Output(), opt.usage())
+			return nil
+		}
+		return err
 	}
 
 	if cmd, found := opt.commands[name]; found {
@@ -154,6 +163,9 @@ func (opt *CmdOpt) usage() string {
 	usage := strings.ReplaceAll(opt.usageTemplate, "{{flags}}", flags)
 	usage = strings.ReplaceAll(usage, "{{commands}}", commands.String())
 
+	if usage[len(usage)-1] != '\n' {
+		usage += "\n"
+	}
 	return usage
 }
 

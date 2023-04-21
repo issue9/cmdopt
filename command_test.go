@@ -30,5 +30,5 @@ func TestCmdOpt_Commands(t *testing.T) {
 	title, usage, found := opt.Command("c1")
 	a.True(found).
 		Equal(title, "c1 title").
-		Equal(usage, "c1 usage")
+		Equal(usage, "c1 usage\n")
 }
