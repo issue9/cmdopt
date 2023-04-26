@@ -73,14 +73,22 @@ func New(output io.Writer, errorHandling flag.ErrorHandling, usageTemplate strin
 // cmd 为该条子命令执行的函数体；
 // usage 为该条子命令的帮助内容。可以包含 {{flags}} 占位符，表示参数信息。
 func (opt *CmdOpt) New(name, title, usage string, cmd CommandFunc) {
-	fs := flag.NewFlagSet(name, opt.cmd.fs.ErrorHandling())
-
-	if _, found := opt.commands[name]; found {
-		panic(fmt.Sprintf("存在相同名称的子命令：%s", name))
+	if name == "" {
+		panic("参数 name 不能为空")
 	}
 	if usage == "" {
 		panic("参数 usage 不能为空")
 	}
+	if cmd == nil {
+		panic("参数 cmd 不能为空")
+	}
+	if _, found := opt.commands[name]; found {
+		panic(fmt.Sprintf("存在相同名称的子命令：%s", name))
+	}
+
+	fs := flag.NewFlagSet(name, opt.cmd.fs.ErrorHandling())
+	do := cmd(fs) // 需要在生成 usage 之前调用
+
 	usage = strings.ReplaceAll(usage, "{{flags}}", getFlags(fs))
 	if usage[len(usage)-1] != '\n' {
 		usage += "\n"
@@ -94,7 +102,7 @@ func (opt *CmdOpt) New(name, title, usage string, cmd CommandFunc) {
 
 	opt.commands[name] = &command{
 		fs:    fs,
-		do:    cmd(fs),
+		do:    do,
 		title: title,
 		usage: usage,
 	}

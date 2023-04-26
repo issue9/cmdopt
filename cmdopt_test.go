@@ -27,11 +27,15 @@ func TestCmdOpt_New(t *testing.T) {
 		}
 	})
 
-	a.Panic(func() {
+	a.PanicString(func() {
 		opt.New("test1test1", "test1", "usage", func(fs *flag.FlagSet) DoFunc {
 			return func(w io.Writer) error { return nil }
 		})
-	})
+	}, "存在相同名称的子命令：test1test1")
+
+	a.PanicString(func() {
+		opt.New("t3", "title", "usage", nil)
+	}, "参数 cmd 不能为空")
 
 	opt.New("t2", "test2", "test2 usage\nline2", func(fs *flag.FlagSet) DoFunc {
 		return func(w io.Writer) error {
