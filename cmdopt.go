@@ -61,7 +61,7 @@ func New(output io.Writer, errorHandling flag.ErrorHandling, usageTemplate strin
 	}
 
 	fs.Usage = func() {
-		fmt.Fprint(opt.cmd.fs.Output(), opt.Usage())
+		fmt.Fprint(opt.Output(), opt.Usage())
 	}
 
 	return opt
@@ -89,7 +89,7 @@ func (opt *CmdOpt) New(name, title, usage string, cmd CommandFunc) {
 	fs.Init(name, opt.cmd.fs.ErrorHandling())
 	fs.SetOutput(opt.cmd.fs.Output())
 	fs.Usage = func() {
-		fmt.Fprint(opt.cmd.fs.Output(), usage)
+		fmt.Fprint(opt.Output(), usage)
 	}
 
 	opt.commands[name] = &command{
@@ -130,12 +130,10 @@ func (opt *CmdOpt) Exec(args []string) error {
 
 	name := args[0]
 	if name[0] == '-' { // 非子命令模式
-		err := opt.cmd.exec(args)
-		if errors.Is(err, flag.ErrHelp) {
-			fmt.Fprint(opt.cmd.fs.Output(), opt.Usage())
-			return nil
+		if err := opt.cmd.exec(args); err != nil && !errors.Is(err, flag.ErrHelp) {
+			return err
 		}
-		return err
+		return nil
 	}
 
 	if cmd, found := opt.commands[name]; found {
