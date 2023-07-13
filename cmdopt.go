@@ -44,8 +44,7 @@ type CmdOpt struct {
 // 在 CommandFunc 中初始化 flag 参数，在 CommandFunc 的返回函数中作实际处理，
 // 这样可以防止大量的全局变量的声明。
 //
-// 如非必要情况，用户不应该在 CommandFunc 中修改 FlagSet 的 Output 和 Usage，
-// 这两者由包统一管理。
+// 如非必要情况，CommandFunc 的 FlagSet 只用于绑定参数，不应该修改其相关配置。
 type CommandFunc = func(*flag.FlagSet) DoFunc
 
 // DoFunc 命令行的实际执行方法

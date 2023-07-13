@@ -24,11 +24,9 @@ func Help(opt *CmdOpt, name, title, usage string) {
 			}
 
 			name := fs.Arg(0)
-			for _, cmd := range opt.Commands() { // h.opt.Commands() 可以保证顺序一致。
-				if cmd == name {
-					_, err := io.WriteString(output, opt.commands[cmd].usage)
-					return err
-				}
+			if _, usage, found := opt.Command(name); found {
+				_, err := io.WriteString(output, usage)
+				return err
 			}
 
 			_, err := io.WriteString(output, opt.notFound(name))
@@ -52,10 +50,8 @@ func (opt *CmdOpt) Commands() []string {
 
 // Command 返回指定的命令的说明
 func (opt *CmdOpt) Command(name string) (title, usage string, found bool) {
-	for k, v := range opt.commands {
-		if k == name {
-			return v.title, v.usage, true
-		}
+	if cmd, found := opt.commands[name]; found {
+		return cmd.title, cmd.usage, true
 	}
 	return "", "", false
 }
