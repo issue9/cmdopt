@@ -9,8 +9,7 @@ import (
 )
 
 type command struct {
-	fs    *flag.FlagSet
-	do    DoFunc
+	exec  func(io.Writer, []string) error
 	title string
 	usage string
 }
@@ -20,32 +19,24 @@ func Help(opt *CmdOpt, name, title, usage string) {
 	f := func(fs *flag.FlagSet) DoFunc {
 		return func(output io.Writer) error {
 			if fs.NArg() == 0 {
-				opt.cmd.fs.Usage()
-				return nil
+				_, err := io.WriteString(output, opt.usage())
+				return err
 			}
 
 			name := fs.Arg(0)
 			for _, cmd := range opt.Commands() { // h.opt.Commands() 可以保证顺序一致。
 				if cmd == name {
-					opt.commands[cmd].fs.Usage()
-					return nil
+					_, err := io.WriteString(output, opt.commands[cmd].usage)
+					return err
 				}
 			}
 
-			_, err := output.Write([]byte(opt.notFound(name)))
+			_, err := io.WriteString(output, opt.notFound(name))
 			return err
 		}
 	}
 
 	opt.New(name, title, usage, f)
-}
-
-// args 表示参数列表，第一个元素为子命令名称
-func (cmd *command) exec(args []string) error {
-	if err := cmd.fs.Parse(args); err != nil {
-		return err
-	}
-	return cmd.do(cmd.fs.Output())
 }
 
 // Commands 返回所有的子命令

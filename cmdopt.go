@@ -14,11 +14,15 @@ import (
 
 // CmdOpt 带子命令的命令行操作
 type CmdOpt struct {
-	cmd           *command
-	usageTemplate string
-	notFound      func(string) string
-	commands      map[string]*command
-	maxCmdLen     int // 记录子命令的最大字符宽度，使输出的命令行可以更加美观。
+	cmd *command
+	// 生成整个整个命令行的使用说明
+	usage func() string
+
+	output      io.Writer
+	errHandling flag.ErrorHandling
+	notFound    func(string) string
+	commands    map[string]*command
+	maxCmdLen   int // 记录子命令的最大字符宽度，使输出的命令行可以更加美观。
 
 	execed bool
 }
@@ -37,9 +41,11 @@ type CmdOpt struct {
 //	    }
 //	}
 //
-// 在 CommandFunc 中初始化 flag 参数；
-// 在 CommandFunc 的返回函数中作实际处理，
+// 在 CommandFunc 中初始化 flag 参数，在 CommandFunc 的返回函数中作实际处理，
 // 这样可以防止大量的全局变量的声明。
+//
+// 如非必要情况，用户不应该在 CommandFunc 中修改 FlagSet 的 Output 和 Usage，
+// 这两者由包统一管理。
 type CommandFunc = func(*flag.FlagSet) DoFunc
 
 // DoFunc 命令行的实际执行方法
@@ -50,36 +56,39 @@ type DoFunc = func(io.Writer) error
 // New 声明带有子命令的命令行处理对象
 //
 // output 表示命令行信息的输出通道；
-//
 // errorHandling 表示出错时的处理方式；
-//
 // cmd 非子命令的参数设定，可以为空；
+// usageTemplate 命令行的文字说明模板；
+// notFound 表示找不到子命令时需要返回的文字说明，若为空，则采用 usageTemplate 处理后的内容；
 //
-// usageTemplate 命令行的文字说明模板，包含了以下几个占位符：
+// usageTemplate 可以包含了以下几个占位符：
 //   - {{flags}} 参数说明，输出时被参数替换，如果没有可以为空；
 //   - {{commands}} 子命令说明，输出时被子命令列表替换，如果没有可以为空；
-//
-// 占位符区别大小写且不能包含空格。
-//
-// notFound 表示找不到子命令时需要返回的文字说明，若为空，则采用 usageTemplate 处理后的内容；
 func New(output io.Writer, errorHandling flag.ErrorHandling, usageTemplate string, cmd CommandFunc, notFound func(string) string) *CmdOpt {
 	fs := flag.NewFlagSet("", errorHandling)
 	fs.SetOutput(output)
 
-	var do DoFunc
+	do := func(w io.Writer) error { return nil }
 	if cmd != nil {
 		do = cmd(fs)
 	}
 
 	opt := &CmdOpt{
-		cmd:           &command{do: do, fs: fs},
-		usageTemplate: usageTemplate,
-		notFound:      notFound,
-		commands:      make(map[string]*command, 10),
+		cmd: &command{exec: do2exec(do, fs)},
+
+		output:      output,
+		errHandling: errorHandling,
+		notFound:    notFound,
+		commands:    make(map[string]*command, 10),
+	}
+
+	opt.usage = func() string {
+		opt.buildUsage(usageTemplate, fs)
+		return opt.cmd.usage
 	}
 
 	fs.Usage = func() {
-		fmt.Fprint(opt.Output(), opt.Usage())
+		io.WriteString(opt.Output(), opt.usage())
 	}
 
 	return opt
@@ -104,7 +113,8 @@ func (opt *CmdOpt) New(name, title, usage string, cmd CommandFunc) {
 		panic(fmt.Sprintf("存在相同名称的子命令：%s", name))
 	}
 
-	fs := flag.NewFlagSet(name, opt.cmd.fs.ErrorHandling())
+	fs := flag.NewFlagSet(name, opt.errHandling)
+	fs.SetOutput(opt.output)
 	do := cmd(fs) // 确定 flag，需要在生成 usage 之前调用
 
 	usage = strings.ReplaceAll(usage, "{{flags}}", getFlags(fs))
@@ -112,15 +122,36 @@ func (opt *CmdOpt) New(name, title, usage string, cmd CommandFunc) {
 		usage += "\n"
 	}
 
-	fs.Init(name, opt.cmd.fs.ErrorHandling())
-	fs.SetOutput(opt.cmd.fs.Output())
-	fs.Usage = func() {
-		fmt.Fprint(opt.Output(), usage)
+	fs.Usage = func() { io.WriteString(opt.Output(), usage) }
+
+	opt.NewPlain(name, title, usage, do2exec(do, fs))
+}
+
+func do2exec(do DoFunc, fs *flag.FlagSet) func(io.Writer, []string) error {
+	return func(w io.Writer, args []string) error {
+		if err := fs.Parse(args); err != nil {
+			return err
+		}
+		return do(w)
+	}
+}
+
+// NewPlain 添加自行处理参数的子命令
+//
+// 用户需要在 exec 中自行处理命令行参数，exec 原型如下：
+//
+//	func(output io.Writer, args []string) error
+//
+// output 即为 [CmdOpt.Output]，args 为子命令的参数，第一个参数为子命令名称。
+//
+// name, title 和 usage 参数可参考 [CmdOpt.New]，唯一不同点是 usage 不会处理 {{flags}} 占位符。
+func (opt *CmdOpt) NewPlain(name, title, usage string, exec func(io.Writer, []string) error) {
+	if opt.execed {
+		panic("程序已经运行，不可再添加子命令！")
 	}
 
 	opt.commands[name] = &command{
-		fs:    fs,
-		do:    do,
+		exec:  exec,
 		title: title,
 		usage: usage,
 	}
@@ -151,57 +182,56 @@ func (opt *CmdOpt) Exec(args []string) error {
 	opt.execed = true
 
 	if len(args) == 0 {
-		return opt.cmd.exec(nil)
+		return opt.cmd.exec(opt.Output(), nil)
 	}
 
 	name := args[0]
 	if name[0] == '-' { // 第一个即为参数，表示为非子命令模式
-		if err := opt.cmd.exec(args); err != nil && !errors.Is(err, flag.ErrHelp) {
+		if err := opt.cmd.exec(opt.Output(), args); err != nil && !errors.Is(err, flag.ErrHelp) {
 			return err
 		}
 		return nil
 	}
 
 	if cmd, found := opt.commands[name]; found {
-		return cmd.exec(args[1:])
+		return cmd.exec(opt.Output(), args[1:])
 	}
 
 	if opt.notFound != nil {
-		_, err := io.WriteString(opt.cmd.fs.Output(), opt.notFound(name))
+		_, err := io.WriteString(opt.Output(), opt.notFound(name))
 		return err
 	}
 
-	opt.cmd.fs.Usage()
-	return nil
+	_, err := io.WriteString(opt.Output(), opt.Usage())
+	return err
 }
 
 // Usage 整个项目的使用说明内容
 //
 // 基于 [New] 的 usage 参数，里面的占位符会被真实的内容所覆盖。
-func (opt *CmdOpt) Usage() string {
-	flags := getFlags(opt.cmd.fs)
+// 每次调用时都根据当前的命令行情况重新生成内容。
+func (opt *CmdOpt) Usage() string { return opt.usage() }
+
+func (opt *CmdOpt) buildUsage(tpl string, fs *flag.FlagSet) {
+	flags := getFlags(fs)
 	var commands bytes.Buffer
 	for _, name := range opt.Commands() { // 保证顺序相同
-		cmd := opt.commands[name]
+		title, _, _ := opt.Command(name)
 		cmdName := name + strings.Repeat(" ", opt.maxCmdLen+3-len(name)) // 为子命令名称留下的最小长度
-		fmt.Fprintf(&commands, "  %s%s\n", cmdName, cmd.title)
+		fmt.Fprintf(&commands, "  %s%s\n", cmdName, title)
 	}
 
-	usage := strings.ReplaceAll(opt.usageTemplate, "{{flags}}", flags)
+	usage := strings.ReplaceAll(tpl, "{{flags}}", flags)
 	usage = strings.ReplaceAll(usage, "{{commands}}", commands.String())
 
-	if usage[len(usage)-1] != '\n' {
+	if len(usage) > 0 && usage[len(usage)-1] != '\n' {
 		usage += "\n"
 	}
-	return usage
+
+	opt.cmd.usage = usage
 }
 
 // SetOutput 设置输出通道
-func (opt *CmdOpt) SetOutput(w io.Writer) {
-	opt.cmd.fs.SetOutput(w)
-	for _, c := range opt.commands {
-		c.fs.SetOutput(w)
-	}
-}
+func (opt *CmdOpt) SetOutput(w io.Writer) { opt.output = w }
 
-func (opt *CmdOpt) Output() io.Writer { return opt.cmd.fs.Output() }
+func (opt *CmdOpt) Output() io.Writer { return opt.output }
