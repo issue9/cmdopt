@@ -16,8 +16,8 @@ type command struct {
 }
 
 // Help 注册 help 子命令
-func Help(opt *CmdOpt) CommandFunc {
-	return func(fs *flag.FlagSet) DoFunc {
+func Help(opt *CmdOpt, name, title, usage string) {
+	f := func(fs *flag.FlagSet) DoFunc {
 		return func(output io.Writer) error {
 			if fs.NArg() == 0 {
 				opt.cmd.fs.Usage()
@@ -36,14 +36,12 @@ func Help(opt *CmdOpt) CommandFunc {
 			return err
 		}
 	}
+
+	opt.New(name, title, usage, f)
 }
 
 // args 表示参数列表，第一个元素为子命令名称
 func (cmd *command) exec(args []string) error {
-	if cmd.do == nil { // 空的子命令
-		return nil
-	}
-
 	if err := cmd.fs.Parse(args); err != nil {
 		return err
 	}
