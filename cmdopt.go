@@ -141,7 +141,7 @@ func do2exec(do DoFunc, fs *flag.FlagSet) func(io.Writer, []string) error {
 //
 //	func(output io.Writer, args []string) error
 //
-// output 即为 [CmdOpt.Output]，args 为子命令的参数，第一个参数为子命令名称。
+// output 即为 [CmdOpt.Output]，args 为子命令的参数，不包含子命令本身。
 //
 // name, title 和 usage 参数可参考 [CmdOpt.New]，唯一不同点是 usage 不会处理 {{flags}} 占位符。
 func (opt *CmdOpt) NewPlain(name, title, usage string, exec func(io.Writer, []string) error) {
