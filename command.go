@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2019-2024 caixw
+//
 // SPDX-License-Identifier: MIT
 
 package cmdopt

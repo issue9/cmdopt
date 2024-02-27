@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2019-2024 caixw
+//
 // SPDX-License-Identifier: MIT
 
 // Package cmdopt 用于创建子命令功能的命令行
