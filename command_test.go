@@ -10,7 +10,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/issue9/assert/v3"
+	"github.com/issue9/assert/v4"
 )
 
 func TestCmdOpt_Commands(t *testing.T) {
