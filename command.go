@@ -46,7 +46,7 @@ func (opt *CmdOpt) Commands() []string {
 		keys = append(keys, key)
 	}
 
-	sort.Strings(keys)
+	sort.Strings(keys) // TODO(go1.21): slices.Sort
 	return keys
 }
 
