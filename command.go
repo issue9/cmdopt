@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2019-2024 caixw
+// SPDX-FileCopyrightText: 2019-2026 caixw
 //
 // SPDX-License-Identifier: MIT
 
@@ -7,7 +7,7 @@ package cmdopt
 import (
 	"flag"
 	"io"
-	"sort"
+	"slices"
 )
 
 type command struct {
@@ -46,7 +46,7 @@ func (opt *CmdOpt) Commands() []string {
 		keys = append(keys, key)
 	}
 
-	sort.Strings(keys) // TODO(go1.21): slices.Sort
+	slices.Sort(keys)
 	return keys
 }
 
