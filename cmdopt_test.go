@@ -122,12 +122,12 @@ func TestCmdOpt_Exec(t *testing.T) {
 	// Exec not-exists
 	opt, output = newOpt(a)
 	a.NotError(opt.Exec([]string{"not-exists"}))
-	a.True(strings.HasPrefix(output.String(), notFound("not-exists")))
+	a.Equal(output.String(), "def")
 
 	// Exec help 未注册
 	opt, output = newOpt(a)
 	a.NotError(opt.Exec([]string{"not-exists"}))
-	a.True(strings.HasPrefix(output.String(), notFound("not-exists")))
+	a.Equal(output.String(), "def")
 
 	// 注册 h
 	opt, output = newOpt(a)

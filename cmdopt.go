@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2019-2024 caixw
+// SPDX-FileCopyrightText: 2019-2026 caixw
 //
 // SPDX-License-Identifier: MIT
 
@@ -97,6 +97,7 @@ func New(output io.Writer, errorHandling flag.ErrorHandling, usageTemplate strin
 // New 注册一条新的子命令
 //
 // name 为子命令的名称，必须唯一；
+// title 子命令的简要说明，不能包含换行符；
 // cmd 为该条子命令执行的函数体，具体可参考 [CommandFunc]；
 // usage 为该条子命令的帮助内容。可以包含 {{flags}} 占位符，表示参数信息。
 func (opt *CmdOpt) New(name, title, usage string, cmd CommandFunc) {
@@ -186,23 +187,17 @@ func (opt *CmdOpt) Exec(args []string) error {
 	}
 
 	name := args[0]
-	if name[0] == '-' { // 第一个即为参数，表示为非子命令模式
-		if err := opt.cmd.exec(opt.Output(), args); err != nil && !errors.Is(err, flag.ErrHelp) {
-			return err
+	if name[0] != '-' { // 非 - 开头，先尝试是否为子命令，如果找不到再执行主命令。
+		if cmd, found := opt.commands[name]; found {
+			return cmd.exec(opt.Output(), args[1:])
 		}
-		return nil
 	}
 
-	if cmd, found := opt.commands[name]; found {
-		return cmd.exec(opt.Output(), args[1:])
+	err := opt.cmd.exec(opt.Output(), args)
+	if errors.Is(err, flag.ErrHelp) {
+		_, err = io.WriteString(opt.Output(), opt.Usage())
 	}
 
-	if opt.notFound != nil {
-		_, err := io.WriteString(opt.Output(), opt.notFound(name))
-		return err
-	}
-
-	_, err := io.WriteString(opt.Output(), opt.Usage())
 	return err
 }
 
@@ -235,3 +230,5 @@ func (opt *CmdOpt) buildUsage(tpl string, fs *flag.FlagSet) {
 func (opt *CmdOpt) SetOutput(w io.Writer) { opt.output = w }
 
 func (opt *CmdOpt) Output() io.Writer { return opt.output }
+
+func (opt *CmdOpt) ErrorHandling() flag.ErrorHandling { return opt.errHandling }
