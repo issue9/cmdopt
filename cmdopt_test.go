@@ -29,8 +29,14 @@ func TestCmdOpt_Exec(t *testing.T) {
 				return err
 			}
 		}
-		opt := New(output, flag.PanicOnError, "header\noptions\n{{flags}}\ncommands\n{{commands}}\nfooter", cmd, notFound)
-		a.NotNil(opt)
+		opt := New(&Options{
+			Output:        output,
+			ErrorHandling: flag.PanicOnError,
+			UsageTemplate: "header\noptions\n{{flags}}\ncommands\n{{commands}}\nfooter",
+			Command:       cmd,
+			NotFound:      notFound,
+		})
+		a.NotNil(opt).Equal(opt.Name(), "")
 
 		opt.New("test1test1", "test1", "test1 usage\n{{flags}}", func(fs *flag.FlagSet) DoFunc {
 			v := false
@@ -142,14 +148,22 @@ func TestCmdOpt_Output(t *testing.T) {
 	a := assert.New(t, false)
 
 	o1 := new(bytes.Buffer)
-	opt := New(o1, flag.ContinueOnError, "", nil, nil)
+	opt := New(&Options{
+		Name:          "test",
+		Version:       "1.0.1",
+		Output:        o1,
+		ErrorHandling: flag.ContinueOnError,
+		UsageTemplate: "",
+	})
 	opt.New("c1", "title", "usage", func(fs *flag.FlagSet) DoFunc {
 		return func(w io.Writer) error {
 			_, err := w.Write([]byte("c1"))
 			return err
 		}
 	})
-	a.Equal(opt.Output(), o1)
+	a.Equal(opt.Output(), o1).
+		Equal(opt.Name(), "test").
+		Equal(opt.Version(), "1.0.1")
 
 	o2 := new(strings.Builder)
 	opt.SetOutput(o2)

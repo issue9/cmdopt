@@ -17,7 +17,12 @@ import (
 func TestCmdOpt_New(t *testing.T) {
 	a := assert.New(t, false)
 	output := new(bytes.Buffer)
-	opt := New(output, flag.PanicOnError, "header\noptions\n{{flags}}\ncommands\n{{commands}}\nfooter", nil, notFound)
+	opt := New(&Options{
+		Output:        output,
+		ErrorHandling: flag.PanicOnError,
+		UsageTemplate: "header\noptions\n{{flags}}\ncommands\n{{commands}}\nfooter",
+		NotFound:      notFound,
+	})
 	a.NotNil(opt)
 
 	opt.New("test1test1", "test1", "test1 usage\n{{flags}}", func(fs *flag.FlagSet) DoFunc {
@@ -48,7 +53,12 @@ func TestCmdOpt_New(t *testing.T) {
 func TestCmdOpt_Commands(t *testing.T) {
 	a := assert.New(t, false)
 
-	opt := New(os.Stdout, flag.ExitOnError, "usage\nusage", nil, func(s string) string { return "not found " + s })
+	opt := New(&Options{
+		Output:        os.Stdout,
+		ErrorHandling: flag.ExitOnError,
+		UsageTemplate: "usage\nusage",
+		NotFound:      func(s string) string { return "not found " + s },
+	})
 	a.NotNil(opt)
 
 	a.Length(opt.Commands(), 0)
