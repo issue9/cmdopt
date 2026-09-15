@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"maps"
 	"slices"
 	"strings"
 )
@@ -130,11 +131,7 @@ func (opt *CmdOpt) NewPlain(name, title, usage string, exec func(io.Writer, []st
 
 // Commands 返回所有的子命令
 func (opt *CmdOpt) Commands() []string {
-	keys := make([]string, 0, len(opt.commands))
-	for key := range opt.commands {
-		keys = append(keys, key)
-	}
-
+	keys := slices.Collect(maps.Keys(opt.commands))
 	slices.Sort(keys)
 	return keys
 }
