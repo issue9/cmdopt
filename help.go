@@ -2,6 +2,13 @@
 //
 // SPDX-License-Identifier: MIT
 
+package cmdopt
+
+import (
+	"flag"
+	"io"
+)
+
 // Help 注册 help 子命令
 //
 // 注册之后可通过 `help <name>` 来获取该子命令的使用说明。

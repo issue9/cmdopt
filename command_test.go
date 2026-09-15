@@ -5,6 +5,7 @@
 package cmdopt
 
 import (
+	"bytes"
 	"flag"
 	"io"
 	"os"
@@ -12,6 +13,37 @@ import (
 
 	"github.com/issue9/assert/v5"
 )
+
+func TestCmdOpt_New(t *testing.T) {
+	a := assert.New(t, false)
+	output := new(bytes.Buffer)
+	opt := New(output, flag.PanicOnError, "header\noptions\n{{flags}}\ncommands\n{{commands}}\nfooter", nil, notFound)
+	a.NotNil(opt)
+
+	opt.New("test1test1", "test1", "test1 usage\n{{flags}}", func(fs *flag.FlagSet) DoFunc {
+		return func(w io.Writer) error {
+			_, err := w.Write([]byte("test1"))
+			return err
+		}
+	})
+
+	a.PanicString(func() {
+		opt.New("test1test1", "test1", "usage", func(fs *flag.FlagSet) DoFunc {
+			return func(w io.Writer) error { return nil }
+		})
+	}, "存在相同名称的子命令：test1test1")
+
+	a.PanicString(func() {
+		opt.New("t3", "title", "usage", nil)
+	}, "参数 cmd 不能为空")
+
+	opt.New("t2", "test2", "test2 usage\nline2", func(fs *flag.FlagSet) DoFunc {
+		return func(w io.Writer) error {
+			_, err := w.Write([]byte("test2"))
+			return err
+		}
+	})
+}
 
 func TestCmdOpt_Commands(t *testing.T) {
 	a := assert.New(t, false)
