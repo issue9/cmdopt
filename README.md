@@ -6,7 +6,7 @@ cmdopt
 ![Go version](https://img.shields.io/github/go-mod/go-version/issue9/cmdopt)
 ======
 
-cmdopt 命令行选项的增强，可以轻松处理子命令。高度重用 flag 包。
+cmdopt 命令行选项的增强，可以轻松处理子命令。复用 flag 包。
 
 ```go
 opt := cmdopt.New(...)

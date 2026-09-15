@@ -17,8 +17,8 @@ import (
 // CmdOpt 带子命令的命令行操作
 type CmdOpt struct {
 	cmd *command
-	// 生成整个整个命令行的使用说明
-	usage func() string
+
+	usage func() string // 生成整个命令行的使用说明
 
 	output      io.Writer
 	errHandling flag.ErrorHandling
@@ -65,16 +65,16 @@ type DoFunc = func(io.Writer) error
 //   - {{flags}} 参数说明，输出时被参数替换，如果没有可以为空；
 //   - {{commands}} 子命令说明，输出时被子命令列表替换，如果没有可以为空；
 func New(output io.Writer, errorHandling flag.ErrorHandling, usageTemplate string, cmd CommandFunc, notFound func(string) string) *CmdOpt {
-	fs := flag.NewFlagSet("", errorHandling)
-	fs.SetOutput(output)
+	rootFS := flag.NewFlagSet("", errorHandling)
+	rootFS.SetOutput(output)
 
 	do := func(w io.Writer) error { return nil }
 	if cmd != nil {
-		do = cmd(fs)
+		do = cmd(rootFS)
 	}
 
 	opt := &CmdOpt{
-		cmd: &command{exec: do2exec(do, fs)},
+		cmd: &command{exec: do2exec(do, rootFS)},
 
 		output:      output,
 		errHandling: errorHandling,
@@ -83,11 +83,11 @@ func New(output io.Writer, errorHandling flag.ErrorHandling, usageTemplate strin
 	}
 
 	opt.usage = func() string {
-		opt.buildUsage(usageTemplate, fs)
+		opt.buildUsage(usageTemplate, rootFS)
 		return opt.cmd.usage
 	}
 
-	fs.Usage = func() {
+	rootFS.Usage = func() {
 		io.WriteString(opt.Output(), opt.usage())
 	}
 
@@ -98,8 +98,8 @@ func New(output io.Writer, errorHandling flag.ErrorHandling, usageTemplate strin
 //
 // name 为子命令的名称，必须唯一；
 // title 子命令的简要说明，不能包含换行符；
-// cmd 为该条子命令执行的函数体，具体可参考 [CommandFunc]；
 // usage 为该条子命令的帮助内容。可以包含 {{flags}} 占位符，表示参数信息。
+// cmd 为该条子命令执行的函数体，具体可参考 [CommandFunc]；
 func (opt *CmdOpt) New(name, title, usage string, cmd CommandFunc) {
 	if name == "" {
 		panic("参数 name 不能为空")
@@ -126,6 +126,32 @@ func (opt *CmdOpt) New(name, title, usage string, cmd CommandFunc) {
 	fs.Usage = func() { io.WriteString(opt.Output(), usage) }
 
 	opt.NewPlain(name, title, usage, do2exec(do, fs))
+}
+
+// 对子命令的描述
+//
+// 与 [CmdOpt.New] 的参数一一对应
+type Command struct {
+	// 子命令名称
+	Name string
+
+	// 简短描述
+	Title string
+
+	// 详细说明
+	Usage string
+
+	// 注册的执行方法
+	Command CommandFunc
+}
+
+// NewCommand 注册新的子命令
+//
+// 功能与 [CmdOpt.New] 完全相同，但是可以添加多个。
+func (opt *CmdOpt) NewCommand(cmd ...*Command) {
+	for _, c := range cmd {
+		opt.New(c.Name, c.Title, c.Usage, c.Command)
+	}
 }
 
 func do2exec(do DoFunc, fs *flag.FlagSet) func(io.Writer, []string) error {
