@@ -76,7 +76,7 @@ func (opt *CmdOpt) New(name, title, usage string, cmd CommandFunc) {
 	fs.SetOutput(opt.output)
 	do := cmd(fs) // 确定 flag，需要在生成 usage 之前调用
 
-	usage = strings.ReplaceAll(usage, "{{flags}}", getFlags(fs))
+	usage = strings.ReplaceAll(usage, "{{flags}}", getFlagSetUsage(fs))
 	if usage[len(usage)-1] != '\n' {
 		usage += "\n"
 	}

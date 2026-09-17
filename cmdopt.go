@@ -61,8 +61,10 @@ type Options struct {
 	// 命令行的文字说明模板
 	//
 	//  可以包含了以下几个占位符：
-	//   - {{flags}} 参数说明，输出时被参数替换，如果没有可以为空；
-	//   - {{commands}} 子命令说明，输出时被子命令列表替换，如果没有可以为空；
+	//   - {{name}} [Options.Name] 的值，该值可能为空；
+	//   - {{version}} [Options.Version] 的值，该值可能为空；
+	//   - {{flags}} 参数说明，输出时被参数替换；
+	//   - {{commands}} 子命令说明，输出时被子命令列表替换；
 	//
 	// 若为空，则使用默认的模板生成简单的说明内容。
 	UsageTemplate string
@@ -79,16 +81,6 @@ type Options struct {
 }
 
 // New 声明带有子命令的命令行处理对象
-//
-// output 表示命令行信息的输出通道，默认为 [os.Stdout]；
-// errorHandling 表示出错时的处理方式，默认为 [flag.ContinueOnError]；
-// cmd 非子命令的参数设定，可以为空；
-// usageTemplate 命令行的文字说明模板；
-// notFound 表示找不到子命令时需要返回的文字说明，若为空，则采用 usageTemplate 处理后的内容；
-//
-// usageTemplate 可以包含了以下几个占位符：
-//   - {{flags}} 参数说明，输出时被参数替换，如果没有可以为空；
-//   - {{commands}} 子命令说明，输出时被子命令列表替换，如果没有可以为空；
 func New(o *Options) *CmdOpt {
 	rootFS := flag.NewFlagSet(o.Name, o.ErrorHandling)
 	rootFS.SetOutput(o.Output)
@@ -112,7 +104,7 @@ func New(o *Options) *CmdOpt {
 	if o.UsageTemplate == "" {
 		o.UsageTemplate = "{{flags}}\n\n{{commands}}"
 		if o.Name != "" {
-			o.UsageTemplate = o.Name + "\n\n" + o.UsageTemplate
+			o.UsageTemplate = "{{name}}\n\n" + o.UsageTemplate
 		}
 	}
 	opt.usage = func() string {
@@ -125,7 +117,7 @@ func New(o *Options) *CmdOpt {
 	return opt
 }
 
-func getFlags(fs *flag.FlagSet) string {
+func getFlagSetUsage(fs *flag.FlagSet) string {
 	var bs bytes.Buffer
 	old := fs.Output()
 	fs.SetOutput(&bs)
@@ -171,7 +163,7 @@ func (opt *CmdOpt) Exec(args []string) error {
 func (opt *CmdOpt) Usage() string { return opt.usage() }
 
 func (opt *CmdOpt) buildUsage(tpl string, fs *flag.FlagSet) {
-	flags := getFlags(fs)
+	flags := getFlagSetUsage(fs)
 	var commands bytes.Buffer
 	for _, name := range opt.Commands() { // 保证顺序相同
 		title, _, _ := opt.Command(name)
@@ -179,7 +171,9 @@ func (opt *CmdOpt) buildUsage(tpl string, fs *flag.FlagSet) {
 		fmt.Fprintf(&commands, "  %s%s\n", cmdName, title)
 	}
 
-	usage := strings.ReplaceAll(tpl, "{{flags}}", flags)
+	usage := strings.ReplaceAll(tpl, "{{name}}", opt.name)
+	usage = strings.ReplaceAll(tpl, "{{version}}", opt.version)
+	usage = strings.ReplaceAll(tpl, "{{flags}}", flags)
 	usage = strings.ReplaceAll(usage, "{{commands}}", commands.String())
 
 	if len(usage) > 0 && usage[len(usage)-1] != '\n' {
