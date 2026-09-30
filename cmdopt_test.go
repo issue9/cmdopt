@@ -14,7 +14,7 @@ import (
 	"github.com/issue9/assert/v5"
 )
 
-func notFound(s string) string { return "not found " + s }
+func notFound(_ *CmdOpt, s string) string { return "not found " + s }
 
 func TestCmdOpt_Exec(t *testing.T) {
 	a := assert.New(t, false)
@@ -113,7 +113,7 @@ func TestCmdOpt_Exec(t *testing.T) {
 	opt, output = newOpt(a)
 	Help(opt, "h", "h-title", "help usage")
 	a.NotError(opt.Exec([]string{"h", "not-exists"}))
-	a.True(strings.HasPrefix(output.String(), notFound("not-exists")), output.String())
+	a.True(strings.HasPrefix(output.String(), opt.NotFound("not-exists")), output.String())
 
 	// Exec h
 	opt, output = newOpt(a)

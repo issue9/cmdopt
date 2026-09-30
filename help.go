@@ -26,7 +26,7 @@ func Help(opt *CmdOpt, name, title, usage string) {
 				return err
 			}
 
-			_, err := io.WriteString(output, opt.notFound(name))
+			_, err := io.WriteString(output, opt.NotFound(name))
 			return err
 		}
 	}

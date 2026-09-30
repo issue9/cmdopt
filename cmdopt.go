@@ -30,7 +30,7 @@ type CmdOpt struct {
 
 	output      io.Writer
 	errHandling flag.ErrorHandling
-	notFound    func(string) string
+	notFound    NotFound
 	maxCmdLen   int // 记录子命令的最大字符宽度，使输出的命令行可以更加美观。
 
 	// TODO: 可以换成有序的 map
@@ -40,6 +40,8 @@ type CmdOpt struct {
 
 	execed bool
 }
+
+type NotFound func(*CmdOpt, string) string
 
 type Options struct {
 	// 应用名称
@@ -73,15 +75,15 @@ type Options struct {
 	// 若为空，则使用默认的模板生成简单的说明内容。
 	UsageTemplate string
 
-	// 非子命令的参数设定
+	// 主命令的参数设定
 	//
-	// 若为空，则表示没有非子命令的参数设定。
+	// 若为空，则表示没有主命令的参数设定。
 	Command CommandFunc
 
 	// 表示找不到子命令时需要返回的文字说明
 	//
 	// 若为空，则采用 usageTemplate 处理后的内容
-	NotFound func(string) string
+	NotFound NotFound
 }
 
 // New 声明带有子命令的命令行处理对象
@@ -147,7 +149,7 @@ func (opt *CmdOpt) Exec(args []string) error {
 	}
 
 	name := args[0]
-	if name[0] != '-' { // 非 - 开头，先尝试是否为子命令，如果找不到再执行主命令。
+	if name[0] != '-' { // 非 - 开头，先尝试是否为子命令，如果找不到再作为主命令的参数执行。
 		if cmd, found := opt.commands[name]; found {
 			return cmd.exec(opt.Output(), args[1:])
 		}
@@ -198,3 +200,8 @@ func (opt *CmdOpt) ErrorHandling() flag.ErrorHandling { return opt.errHandling }
 func (opt *CmdOpt) Name() string { return opt.name }
 
 func (opt *CmdOpt) Version() string { return opt.version }
+
+// NotFound 返回未找到子命令的提示内容
+func (opt *CmdOpt) NotFound(cmd string) string {
+	return opt.notFound(opt, cmd)
+}

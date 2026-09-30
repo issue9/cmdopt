@@ -57,7 +57,7 @@ func TestCmdOpt_Commands(t *testing.T) {
 		Output:        os.Stdout,
 		ErrorHandling: flag.ExitOnError,
 		UsageTemplate: "usage\nusage",
-		NotFound:      func(s string) string { return "not found " + s },
+		NotFound:      notFound,
 	})
 	a.NotNil(opt)
 
