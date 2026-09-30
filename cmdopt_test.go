@@ -14,7 +14,7 @@ import (
 	"github.com/issue9/assert/v5"
 )
 
-func notFound(_ *CmdOpt, s string) string { return "not found " + s }
+func notFound(_ *CmdOpt, s string, _ []string) string { return "not found " + s }
 
 func TestCmdOpt_Exec(t *testing.T) {
 	a := assert.New(t, false)

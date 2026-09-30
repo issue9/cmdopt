@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"io"
 	"strings"
+
+	"github.com/agnivade/levenshtein"
 )
 
 type command struct {
@@ -41,7 +43,11 @@ type CmdOpt struct {
 	execed bool
 }
 
-type NotFound func(*CmdOpt, string) string
+// NotFound 未找到子命令时调用的模板函数
+//
+// cmd 未找到的子命令；
+// suggest 根据 cmd 找到的一些相似的子命令；
+type NotFound func(o *CmdOpt, cmd string, suggest []string) string
 
 type Options struct {
 	// 应用名称
@@ -203,5 +209,15 @@ func (opt *CmdOpt) Version() string { return opt.version }
 
 // NotFound 返回未找到子命令的提示内容
 func (opt *CmdOpt) NotFound(cmd string) string {
-	return opt.notFound(opt, cmd)
+	suggest := make([]string, len(opt.keys))
+	for _, key := range opt.keys {
+		if similarity(key, cmd) > 0.5 {
+			suggest = append(suggest, key)
+		}
+	}
+	return opt.notFound(opt, cmd, suggest)
+}
+
+func similarity(a, b string) float32 {
+	return 1 - float32(levenshtein.ComputeDistance(a, b))/float32(max(len(a), len(b)))
 }
