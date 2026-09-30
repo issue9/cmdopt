@@ -31,8 +31,12 @@ type CmdOpt struct {
 	output      io.Writer
 	errHandling flag.ErrorHandling
 	notFound    func(string) string
-	commands    map[string]*command // TODO(go1.28): 应该使用有序的 map
-	maxCmdLen   int                 // 记录子命令的最大字符宽度，使输出的命令行可以更加美观。
+	maxCmdLen   int // 记录子命令的最大字符宽度，使输出的命令行可以更加美观。
+
+	// TODO: 可以换成有序的 map
+	// https://github.com/golang/go/issues/80590
+	commands map[string]*command
+	keys     []string // 排序后的 commands.key
 
 	execed bool
 }
@@ -99,6 +103,7 @@ func New(o *Options) *CmdOpt {
 		errHandling: o.ErrorHandling,
 		notFound:    o.NotFound,
 		commands:    make(map[string]*command, 10),
+		keys:        make([]string, 0, 10),
 	}
 
 	if o.UsageTemplate == "" {
@@ -165,7 +170,7 @@ func (opt *CmdOpt) Usage() string { return opt.usage() }
 func (opt *CmdOpt) buildUsage(tpl string, fs *flag.FlagSet) {
 	flags := getFlagSetUsage(fs)
 	var commands bytes.Buffer
-	for _, name := range opt.Commands() { // 保证顺序相同
+	for _, name := range opt.keys { // 保证顺序相同
 		title, _, _ := opt.Command(name)
 		cmdName := name + strings.Repeat(" ", opt.maxCmdLen+3-len(name)) // 为子命令名称留下的最小长度
 		fmt.Fprintf(&commands, "  %s%s\n", cmdName, title)

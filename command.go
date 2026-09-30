@@ -8,8 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"maps"
-	"slices"
+	"sort"
 	"strings"
 )
 
@@ -124,17 +123,18 @@ func (opt *CmdOpt) NewPlain(name, title, usage string, exec func(io.Writer, []st
 		usage: usage,
 	}
 
+	opt.keys = append(opt.keys, name)
+	sort.Strings(opt.keys)
+
 	if l := len(name); l > opt.maxCmdLen {
 		opt.maxCmdLen = l
 	}
 }
 
 // Commands 返回所有的子命令
-func (opt *CmdOpt) Commands() []string {
-	keys := slices.Collect(maps.Keys(opt.commands))
-	slices.Sort(keys)
-	return keys
-}
+//
+// NOTE: 不能修改返回值
+func (opt *CmdOpt) Commands() []string { return opt.keys }
 
 // Command 返回指定的命令的说明
 func (opt *CmdOpt) Command(name string) (title, usage string, found bool) {
