@@ -176,7 +176,7 @@ func (opt *CmdOpt) Exec(args []string) error {
 func (opt *CmdOpt) Usage() string { return opt.usage() }
 
 func (opt *CmdOpt) buildUsage(tpl string, fs *flag.FlagSet) {
-	flags := getFlagSetUsage(fs)
+	fsu := getFlagSetUsage(fs)
 	var commands bytes.Buffer
 	for _, name := range opt.keys { // 保证顺序相同
 		title, _, _ := opt.Command(name)
@@ -186,7 +186,7 @@ func (opt *CmdOpt) buildUsage(tpl string, fs *flag.FlagSet) {
 
 	usage := strings.ReplaceAll(tpl, "{{name}}", opt.name)
 	usage = strings.ReplaceAll(tpl, "{{version}}", opt.version)
-	usage = strings.ReplaceAll(tpl, "{{flags}}", flags)
+	usage = strings.ReplaceAll(tpl, "{{flags}}", fsu)
 	usage = strings.ReplaceAll(usage, "{{commands}}", commands.String())
 
 	if len(usage) > 0 && usage[len(usage)-1] != '\n' {
@@ -209,6 +209,10 @@ func (opt *CmdOpt) Version() string { return opt.version }
 
 // NotFound 返回未找到子命令的提示内容
 func (opt *CmdOpt) NotFound(cmd string) string {
+	if opt.notFound == nil {
+		return opt.usage()
+	}
+
 	suggest := make([]string, len(opt.keys))
 	for _, key := range opt.keys {
 		if similarity(key, cmd) > 0.5 {
