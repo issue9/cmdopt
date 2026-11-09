@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/issue9/assert/v5"
+	"github.com/issue9/assert/v6"
 )
 
 func notFound(_ *CmdOpt, s string, _ []string) string { return "not found " + s }
